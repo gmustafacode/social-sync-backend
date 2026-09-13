@@ -1,0 +1,6 @@
+@echo off
+cd ai-service
+echo Installing dependencies...
+..\venv\Scripts\python.exe -m pip install -r requirements.txt
+echo Starting AI Service...
+..\venv\Scripts\python.exe main.py

@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+langchain-core
+langchain-groq
+langgraph
+supabase
+storage3
+pydantic
+python-dotenv
+httpx
+pytest
+gunicorn
+uvicorn-worker
