@@ -305,7 +305,7 @@ export const xCallback = async (
 
         delete req.app.locals.xOAuth;
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=x&name=${encodeURIComponent(socialAccount.name || socialAccount.username || 'X')}`);
 
 
@@ -318,7 +318,7 @@ export const xCallback = async (
         );
 
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(error.message || 'X authentication failed')}`);
 
     }

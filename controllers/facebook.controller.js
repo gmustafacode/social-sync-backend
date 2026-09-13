@@ -293,14 +293,14 @@ export const facebookCallback = async (req, res) => {
 
         delete req.app.locals.facebookOAuth;
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=facebook&name=${encodeURIComponent(facebookUser.name || 'Facebook')}`);
 
 
     } catch (error) {
 
         console.error("Facebook Callback Error:", error.response?.data || error.message);
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(error.message || 'Facebook connection failed')}`);
 
     }

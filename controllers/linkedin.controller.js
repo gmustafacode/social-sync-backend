@@ -9,6 +9,11 @@ import User from "../models/user.model.js";
 // =====================================================
 
 const TEMP_USER_ID = "temp-user-001";
+const DEPLOYED_API_URL = "https://newproject-chi-gold.vercel.app";
+const DEPLOYED_FRONTEND_URL = "https://myfrontend-bice.vercel.app";
+const linkedinRedirectUri =
+    process.env.LINKEDIN_REDIRECT_URI ||
+    `${DEPLOYED_API_URL}/api/social/linkedin/callback`;
 
 
 // =====================================================
@@ -24,7 +29,7 @@ export const connectLinkedIn = (req, res) => {
         const params = new URLSearchParams({
             response_type: "code",
             client_id: process.env.LINKEDIN_CLIENT_ID,
-            redirect_uri: process.env.LINKEDIN_REDIRECT_URI,
+            redirect_uri: linkedinRedirectUri,
             scope: "openid profile email w_member_social",
             state: state
         });
@@ -46,7 +51,7 @@ export const connectLinkedIn = (req, res) => {
 // =====================================================
 
 export const linkedInCallback = async (req, res) => {
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || DEPLOYED_FRONTEND_URL;
     try {
         const { code, error, error_description, state } = req.query;
 
@@ -64,7 +69,7 @@ export const linkedInCallback = async (req, res) => {
             code,
             client_id: process.env.LINKEDIN_CLIENT_ID,
             client_secret: process.env.LINKEDIN_CLIENT_SECRET,
-            redirect_uri: process.env.LINKEDIN_REDIRECT_URI
+            redirect_uri: linkedinRedirectUri
         });
 
         const tokenResponse = await axios.post(

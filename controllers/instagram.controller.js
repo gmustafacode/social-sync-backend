@@ -460,12 +460,12 @@ export const instagramCallback = async (
         // CLEAN OAUTH STATE
         delete req.app.locals.instagramOAuth;
 
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=instagram&name=${encodeURIComponent(account.username || account.name || 'Instagram')}`);
 
     } catch (error) {
         console.error("Instagram OAuth error:", error?.response?.data || error);
-        const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(error?.message || 'Instagram OAuth failed')}`);
     }
 };
