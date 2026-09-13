@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const BASE_URL = "http://localhost:8000/api";
+const BASE_URL = "https://newproject-chi-gold.vercel.app/api";
 const token = jwt.sign({ id: "6aa2524cba87ff1b749baf8a" }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 const client = axios.create({

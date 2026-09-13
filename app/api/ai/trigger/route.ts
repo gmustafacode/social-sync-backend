@@ -1,20 +1,27 @@
-import { NextResponse } from 'next/server';
+const deployedServiceUrl = 'https://newproject-chi-gold.vercel.app';
+
+function jsonResponse(data: unknown, status = 200) {
+  return Response.json(data, { status });
+}
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = (await req.json()) as { batch_size?: number };
     const batchSize = body.batch_size || 10;
 
     // Call Python Service
-    let pythonServiceUrl = process.env.AI_SERVICE_URL;
+    const env = (globalThis as typeof globalThis & {
+      process?: { env?: Record<string, string | undefined> }
+    }).process?.env;
+    let pythonServiceUrl = env?.AI_SERVICE_URL;
 
-    if (process.env.NODE_ENV === 'production' && !pythonServiceUrl) {
+    if (env?.NODE_ENV === 'production' && !pythonServiceUrl) {
       console.error("Missing AI_SERVICE_URL in production environment");
-      return NextResponse.json({ error: "Configuration Error: AI Service Unavailable" }, { status: 503 });
+      return jsonResponse({ error: "Configuration Error: AI Service Unavailable" }, 503);
     }
 
     if (!pythonServiceUrl) {
-      pythonServiceUrl = 'http://localhost:8000'; // Dev fallback
+      pythonServiceUrl = deployedServiceUrl;
     }
 
     console.log(`Triggering AI Analysis at ${pythonServiceUrl} with batch size ${batchSize}`);
@@ -30,14 +37,15 @@ export async function POST(req: Request) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      return NextResponse.json({ error: `AI Service Error: ${errorText}` }, { status: response.status });
+      return jsonResponse({ error: `AI Service Error: ${errorText}` }, response.status);
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return jsonResponse(data);
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error triggering AI analysis:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : 'AI analysis failed';
+    return jsonResponse({ error: message }, 500);
   }
 }

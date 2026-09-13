@@ -2,7 +2,7 @@ import requests
 import json
 import sys
 
-url = "http://localhost:8000/api/analyze"
+url = "https://newproject-chi-gold.vercel.app/api/analyze"
 payload = {"batch_size": 2}
 
 print(f"Testing {url} with {payload}...")
