@@ -1,4 +1,5 @@
 import express from "express";
+import authMiddleware from "../middleware/auth.js";
 
 
 // OAuth
@@ -97,6 +98,8 @@ router.get(
     "/callback",
     instagramCallback
 );
+
+router.use(authMiddleware);
 
 
 // =====================================================

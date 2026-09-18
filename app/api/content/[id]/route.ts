@@ -24,7 +24,7 @@ export async function DELETE(
         }
 
         await db.contentQueue.delete({
-            where: { id }
+            where: { id, userId }
         })
 
         return NextResponse.json({ success: true, message: "Content dismissed" })

@@ -21,13 +21,12 @@ const GRAPH_URL =
 // HELPER
 // =====================================================
 
-const getInstagramAccount = async () => {
+const getInstagramAccount = async (userId) => {
 
     const account =
         await SocialAccount.findOne({
 
-            userId:
-                TEMP_USER_ID,
+            userId,
 
             platform:
                 "instagram"
@@ -55,67 +54,67 @@ const getInstagramAccount = async () => {
 // =====================================================
 
 export const getInstagramMedia =
-async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-        const account =
-            await getInstagramAccount();
+            const account =
+                await getInstagramAccount(req.userId);
 
 
-        const response =
-            await axios.get(
+            const response =
+                await axios.get(
 
-                `${GRAPH_URL}/${account.platformUserId}/media`,
+                    `${GRAPH_URL}/${account.platformUserId}/media`,
 
-                {
+                    {
 
-                    params: {
+                        params: {
 
-                        fields:
-                            "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,children",
+                            fields:
+                                "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,children",
 
-                        access_token:
-                            account.accessToken
+                            access_token:
+                                account.accessToken
+
+                        }
 
                     }
 
-                }
-
-            );
+                );
 
 
-        res.json({
+            res.json({
 
-            success: true,
+                success: true,
 
-            data:
-                response.data.data,
+                data:
+                    response.data.data,
 
-            paging:
-                response.data.paging || null
+                paging:
+                    response.data.paging || null
 
-        });
+            });
 
 
-    } catch (error) {
+        } catch (error) {
 
-        res.status(500).json({
+            res.status(500).json({
 
-            success: false,
+                success: false,
 
-            message:
-                "Failed to get Instagram media",
+                message:
+                    "Failed to get Instagram media",
 
-            instagramError:
-                error.response?.data ||
-                error.message
+                instagramError:
+                    error.response?.data ||
+                    error.message
 
-        });
+            });
 
-    }
+        }
 
-};
+    };
 
 
 // =====================================================
@@ -124,69 +123,69 @@ async (req, res) => {
 // =====================================================
 
 export const getSingleMedia =
-async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-        const account =
-            await getInstagramAccount();
-
-
-        const {
-            mediaId
-        } = req.params;
+            const account =
+                await getInstagramAccount(req.userId);
 
 
-        const response =
-            await axios.get(
+            const {
+                mediaId
+            } = req.params;
 
-                `${GRAPH_URL}/${mediaId}`,
 
-                {
+            const response =
+                await axios.get(
 
-                    params: {
+                    `${GRAPH_URL}/${mediaId}`,
 
-                        fields:
-                            "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,children",
+                    {
 
-                        access_token:
-                            account.accessToken
+                        params: {
+
+                            fields:
+                                "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,children",
+
+                            access_token:
+                                account.accessToken
+
+                        }
 
                     }
 
-                }
-
-            );
+                );
 
 
-        res.json({
+            res.json({
 
-            success: true,
+                success: true,
 
-            media:
-                response.data
+                media:
+                    response.data
 
-        });
+            });
 
 
-    } catch (error) {
+        } catch (error) {
 
-        res.status(500).json({
+            res.status(500).json({
 
-            success: false,
+                success: false,
 
-            message:
-                "Failed to get Instagram media",
+                message:
+                    "Failed to get Instagram media",
 
-            instagramError:
-                error.response?.data ||
-                error.message
+                instagramError:
+                    error.response?.data ||
+                    error.message
 
-        });
+            });
 
-    }
+        }
 
-};
+    };
 
 
 // =====================================================
@@ -195,69 +194,69 @@ async (req, res) => {
 // =====================================================
 
 export const getContainerStatus =
-async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-        const account =
-            await getInstagramAccount();
-
-
-        const {
-            containerId
-        } = req.params;
+            const account =
+                await getInstagramAccount(req.userId);
 
 
-        const response =
-            await axios.get(
+            const {
+                containerId
+            } = req.params;
 
-                `${GRAPH_URL}/${containerId}`,
 
-                {
+            const response =
+                await axios.get(
 
-                    params: {
+                    `${GRAPH_URL}/${containerId}`,
 
-                        fields:
-                            "id,status_code,status",
+                    {
 
-                        access_token:
-                            account.accessToken
+                        params: {
+
+                            fields:
+                                "id,status_code,status",
+
+                            access_token:
+                                account.accessToken
+
+                        }
 
                     }
 
-                }
-
-            );
+                );
 
 
-        res.json({
+            res.json({
 
-            success: true,
+                success: true,
 
-            container:
-                response.data
+                container:
+                    response.data
 
-        });
+            });
 
 
-    } catch (error) {
+        } catch (error) {
 
-        res.status(500).json({
+            res.status(500).json({
 
-            success: false,
+                success: false,
 
-            message:
-                "Failed to get container status",
+                message:
+                    "Failed to get container status",
 
-            instagramError:
-                error.response?.data ||
-                error.message
+                instagramError:
+                    error.response?.data ||
+                    error.message
 
-        });
+            });
 
-    }
+        }
 
-};
+    };
 
 
 // =====================================================
@@ -266,58 +265,58 @@ async (req, res) => {
 // =====================================================
 
 export const getPublishingLimit =
-async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-        const account =
-            await getInstagramAccount();
+            const account =
+                await getInstagramAccount(req.userId);
 
 
-        const response =
-            await axios.get(
+            const response =
+                await axios.get(
 
-                `${GRAPH_URL}/${account.platformUserId}/content_publishing_limit`,
+                    `${GRAPH_URL}/${account.platformUserId}/content_publishing_limit`,
 
-                {
+                    {
 
-                    params: {
+                        params: {
 
-                        access_token:
-                            account.accessToken
+                            access_token:
+                                account.accessToken
+
+                        }
 
                     }
 
-                }
-
-            );
+                );
 
 
-        res.json({
+            res.json({
 
-            success: true,
+                success: true,
 
-            data:
-                response.data
+                data:
+                    response.data
 
-        });
+            });
 
 
-    } catch (error) {
+        } catch (error) {
 
-        res.status(500).json({
+            res.status(500).json({
 
-            success: false,
+                success: false,
 
-            message:
-                "Failed to get publishing limit",
+                message:
+                    "Failed to get publishing limit",
 
-            instagramError:
-                error.response?.data ||
-                error.message
+                instagramError:
+                    error.response?.data ||
+                    error.message
 
-        });
+            });
 
-    }
+        }
 
-};
+    };

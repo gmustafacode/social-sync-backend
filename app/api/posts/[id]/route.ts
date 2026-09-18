@@ -32,7 +32,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
         // Update the scheduled post status  
         await db.scheduledPost.update({
-            where: { id },
+            where: { id, userId },
             data: {
                 status: 'CANCELLED',
                 updatedAt: new Date()
@@ -44,14 +44,14 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
             // Try LinkedInPost first
             try {
                 await db.linkedInPost.update({
-                    where: { id: post.contentId },
+                    where: { id: post.contentId, userId },
                     data: { status: 'CANCELLED' }
                 })
             } catch {
                 // May not be a LinkedInPost, try ContentQueue
                 try {
                     await db.contentQueue.update({
-                        where: { id: post.contentId },
+                        where: { id: post.contentId, userId },
                         data: { status: 'cancelled' }
                     })
                 } catch {

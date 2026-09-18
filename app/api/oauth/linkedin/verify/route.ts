@@ -23,10 +23,10 @@ export async function POST(request: Request) { // GET could work, but POST impli
     try {
         // 1. Fetch Account
         const account = await db.socialAccount.findUnique({
-            where: { id: accountId }
+            where: { id: accountId, userId }
         });
 
-        if (!account || account.userId !== userId) {
+        if (!account) {
             return NextResponse.json({ error: "Account not found" }, { status: 404 });
         }
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) { // GET could work, but POST impli
 
         // 5. Update Database
         const updatedAccount = await db.socialAccount.update({
-            where: { id: accountId },
+            where: { id: accountId, userId },
             data: {
                 capabilities: capabilities as any, // Prisma Json handling
                 metadata: JSON.stringify(metadata),

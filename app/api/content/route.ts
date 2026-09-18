@@ -29,10 +29,7 @@ export async function GET(request: Request) {
 
         const queue = await db.contentQueue.findMany({
             where: {
-                OR: [
-                    { userId },
-                    { userId: null }
-                ]
+                userId,
             },
             orderBy: [
                 { viralScore: 'desc' },
@@ -60,7 +57,7 @@ export async function POST(request: Request) {
         const body = ContentQueueSchema.parse(json);
 
         if (body.sourceUrl) {
-            const existing = await db.contentQueue.findUnique({ where: { sourceUrl: body.sourceUrl } });
+            const existing = await db.contentQueue.findUnique({ where: { sourceUrl: body.sourceUrl, userId } });
             if (existing) {
                 return apiResponse.error("Content already exists in queue", 409);
             }

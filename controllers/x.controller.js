@@ -341,8 +341,7 @@ export const getXAccount = async (
         const account =
             await SocialAccount.findOne({
 
-                userId:
-                    TEMP_USER_ID,
+                userId: req.userId,
 
                 platform:
                     "x"

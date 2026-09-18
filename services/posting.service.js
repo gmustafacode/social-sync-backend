@@ -7,32 +7,30 @@ import { publishLinkedInVideo } from "../controllers/linkedin/videoPost.controll
  * Main function to route publishing logic based on platform
  */
 export const publishPost = async (post) => {
-    let account = post.socialAccountId;
-    const platform = (post.platform || account?.platform || "linkedin").toLowerCase();
+    let account = null;
+    const accountReference = post.socialAccountId;
+    const platform = (post.platform || accountReference?.platform || "linkedin").toLowerCase();
+    const accountId = accountReference?._id || (typeof accountReference === "string" ? accountReference : null);
 
-    // If account is missing, unpopulated, or an ID string
-    if (!account || typeof account === "string" || (!account.accessToken && !account.encryptedAccessToken && !account.metadata?.pages)) {
-        const accountId = account?._id || (typeof account === "string" ? account : null);
-        if (accountId) {
-            account = await SocialAccount.findById(accountId);
-        }
+    if (accountId && post.userId) {
+        account = await SocialAccount.findOne({ _id: accountId, userId: post.userId });
+    }
 
-        if (!account && post.userId) {
-            const uid = post.userId.toString();
-            // Find active connected account for this user & platform
+    if (!account && post.userId) {
+        const uid = post.userId.toString();
+        // Find active connected account for this user & platform
+        account = await SocialAccount.findOne({
+            userId: { $in: [uid, post.userId] },
+            platform: { $regex: new RegExp(`^${platform}$`, "i") },
+            isConnected: true
+        }).sort({ updatedAt: -1 });
+
+        // Fallback: check any account for this platform
+        if (!account) {
             account = await SocialAccount.findOne({
                 userId: { $in: [uid, post.userId] },
-                platform: { $regex: new RegExp(`^${platform}$`, "i") },
-                isConnected: true
+                platform: { $regex: new RegExp(`^${platform}$`, "i") }
             }).sort({ updatedAt: -1 });
-
-            // Fallback: check any account for this platform
-            if (!account) {
-                account = await SocialAccount.findOne({
-                    userId: { $in: [uid, post.userId] },
-                    platform: { $regex: new RegExp(`^${platform}$`, "i") }
-                }).sort({ updatedAt: -1 });
-            }
         }
     }
 

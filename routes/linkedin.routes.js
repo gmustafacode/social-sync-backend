@@ -1,4 +1,5 @@
 import express from "express";
+import authMiddleware from "../middleware/auth.js";
 
 
 // =====================================================
@@ -113,6 +114,8 @@ router.get(
     linkedInCallback
 
 );
+
+router.use(authMiddleware);
 
 
 // =====================================================

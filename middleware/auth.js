@@ -6,7 +6,9 @@ const authMiddleware = async (req, res, next) => {
         if (!token) return res.status(401).json({ message: "Unauthenticated" });
 
         const decodedData = jwt.verify(token, process.env.JWT_SECRET);
-        req.userId = decodedData?.id;
+        const userId = decodedData?.id || decodedData?._id || decodedData?.userId;
+        if (!userId) return res.status(401).json({ message: "Unauthenticated" });
+        req.userId = userId.toString();
         next();
     } catch (error) {
         res.status(401).json({ message: "Token expired or invalid", error: error.message });

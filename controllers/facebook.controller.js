@@ -15,6 +15,8 @@ const GRAPH_URL =
 
 const TEMP_USER_ID =
     process.env.TEMP_USER_ID || "temp-user-001";
+const DEPLOYED_FACEBOOK_REDIRECT_URI =
+    "https://newproject-chi-gold.vercel.app/api/social/facebook/callback";
 
 
 // =====================================================
@@ -44,9 +46,7 @@ export const connectFacebook = (req, res) => {
 
         req.app.locals.facebookOAuth = { state, userId };
 
-        const redirectUri = isMobileFlow
-            ? (process.env.FACEBOOK_MOBILE_REDIRECT_URI || process.env.FACEBOOK_REDIRECT_URI)
-            : process.env.FACEBOOK_REDIRECT_URI;
+        const redirectUri = DEPLOYED_FACEBOOK_REDIRECT_URI;
 
         req.app.locals.facebookOAuth.redirectUri = redirectUri;
 
@@ -167,7 +167,7 @@ export const facebookCallback = async (req, res) => {
                         client_secret:
                             process.env.FACEBOOK_APP_SECRET,
 
-                        redirect_uri: savedOAuth?.redirectUri || process.env.FACEBOOK_REDIRECT_URI,
+                        redirect_uri: savedOAuth?.redirectUri || DEPLOYED_FACEBOOK_REDIRECT_URI,
 
                         code
                     }

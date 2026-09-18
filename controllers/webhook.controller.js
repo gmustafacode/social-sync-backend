@@ -5,7 +5,7 @@ import PostHistory from "../models/postHistory.model.js";
 export const handlePostStatusWebhook = async (req, res) => {
     try {
         const secret = req.headers["x-webhook-secret"];
-        if (process.env.WEBHOOK_SECRET && secret !== process.env.WEBHOOK_SECRET) {
+        if (!process.env.WEBHOOK_SECRET || secret !== process.env.WEBHOOK_SECRET) {
             console.warn("[Webhook] Unauthorized webhook secret attempt");
             return res.status(401).json({ success: false, message: "Unauthorized secret mismatch" });
         }

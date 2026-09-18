@@ -16,7 +16,7 @@ async function getPageToken() {
 
     const account =
         await SocialAccount.findOne({
-            userId: TEMP_USER_ID,
+            userId: req.userId,
             platform: "facebook"
         });
 

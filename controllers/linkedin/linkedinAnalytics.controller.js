@@ -417,7 +417,7 @@ export const getLinkedInFullAnalytics = async (req, res) => {
                     },
                     {
                         $set: {
-                            userId: TEMP_USER_ID,
+                            userId: req.userId,
                             socialAccountId: linkedinAccount._id,
                             linkedinPostId: postId,
                             authorUrn,
@@ -453,7 +453,7 @@ export const getLinkedInFullAnalytics = async (req, res) => {
             .find({
                 $or: [
                     { socialAccountId: linkedinAccount._id },
-                    { userId: TEMP_USER_ID }
+                    { userId: req.userId }
                 ]
             })
             .sort({ publishedAt: -1, createdAt: -1 });
@@ -495,7 +495,7 @@ export const getLinkedInFullAnalytics = async (req, res) => {
                     },
                     {
                         $set: {
-                            userId: TEMP_USER_ID,
+                            userId: req.userId,
                             socialAccountId: linkedinAccount._id,
                             postId: post._id,
                             linkedinPostId: postUrn,

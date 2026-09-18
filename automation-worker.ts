@@ -220,7 +220,7 @@ async function checkAndProcess() {
                     // ContentQueue status update
                     if (post.contentId) {
                         await db.contentQueue.update({
-                            where: { id: post.contentId },
+                            where: { id: post.contentId, userId: post.userId },
                             data: { status: 'published', publishedAt: new Date() }
                         }).catch(() => { });
                     }

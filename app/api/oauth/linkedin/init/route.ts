@@ -62,7 +62,7 @@ export async function POST(request: Request) {
 
                 if (existing) {
                     await db.socialAccount.update({
-                        where: { id: existing.id },
+                        where: { id: existing.id, userId },
                         data: {
                             encryptedAccessToken: encrypt(accessToken),
                             encryptedRefreshToken: refreshToken ? encrypt(refreshToken) : existing.encryptedRefreshToken,

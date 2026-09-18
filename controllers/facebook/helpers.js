@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import SocialAccount from "../../models/socialAccount.model.js";
 import Post from "../../models/post.model.js";
 import User from "../../models/user.model.js";
@@ -10,52 +9,11 @@ import User from "../../models/user.model.js";
 export async function getFacebookAccount(req) {
     let userId = req.userId?.toString();
 
-    // Try Authorization header if req.userId not populated
-    if (!userId && req.headers?.authorization) {
-        try {
-            const token = req.headers.authorization.split(" ")[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            userId = (decoded?.id || decoded?._id || decoded?.userId)?.toString();
-        } catch {
-            // ignore token decode errors
-        }
-    }
-
-    // Try query token
-    if (!userId && req.query?.token) {
-        try {
-            const decoded = jwt.verify(req.query.token, process.env.JWT_SECRET);
-            userId = (decoded?.id || decoded?._id || decoded?.userId)?.toString();
-        } catch {
-            // ignore
-        }
-    }
-
-    let account = null;
-
-    if (userId) {
-        account = await SocialAccount.findOne({
-            platform: "facebook",
-            $or: [{ userId }, { userId: userId.toString() }]
-        });
-    }
-
-    // Fallback: match by temp-user-001 or most recent active Facebook account
-    if (!account) {
-        account = await SocialAccount.findOne({
-            platform: "facebook",
-            $or: [{ userId: "temp-user-001" }, { platform: "facebook" }]
-        }).sort({ updatedAt: -1 });
-    }
+    if (!userId) return null;
+    const account = await SocialAccount.findOne({ platform: "facebook", userId });
 
     if (!account) {
         return null;
-    }
-
-    // Auto-link to logged-in user if not already linked
-    if (userId && account.userId !== userId) {
-        await SocialAccount.updateOne({ _id: account._id }, { $set: { userId } });
-        account.userId = userId;
     }
 
     const pages = account.metadata?.pages || [];
@@ -63,7 +21,7 @@ export async function getFacebookAccount(req) {
 
     return {
         account,
-        userId: account.userId || userId || "temp-user-001",
+        userId,
         pages,
         defaultPage,
         accessToken: account.accessToken
@@ -116,17 +74,9 @@ export async function recordFacebookPost({
     pageId
 }) {
     try {
-        let validUserObjectId = null;
-        if (userId && userId.length === 24 && /^[0-9a-fA-F]{24}$/.test(userId)) {
-            validUserObjectId = userId;
-        } else {
-            const anyUser = await User.findOne().sort({ createdAt: -1 }).select("_id").lean();
-            if (anyUser) validUserObjectId = anyUser._id;
-        }
-
-        if (validUserObjectId) {
+        if (userId) {
             await Post.create({
-                userId: validUserObjectId,
+                userId,
                 socialAccountId,
                 platform: "facebook",
                 platforms: ["facebook"],

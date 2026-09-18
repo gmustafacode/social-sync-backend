@@ -36,15 +36,10 @@ export async function POST(
         const { decrypt } = await import('@/lib/encryption');
 
         const account = await db.socialAccount.findUnique({
-            where: { id: accountId }
+            where: { id: accountId, userId: (session.user as any).id }
         });
 
         if (account) {
-            // Verify ownership
-            if (account.userId !== (session.user as any).id) {
-                return NextResponse.json({ error: "Unauthorized account access" }, { status: 403 });
-            }
-
             // Check for custom credentials
             if (account.encryptedClientId) {
                 try {

@@ -75,7 +75,7 @@ export async function POST(req: Request) {
 
         // Return the full record for UI consistency
         const post = await db.scheduledPost.findUnique({
-            where: { id: result.scheduledPostId },
+            where: { id: result.scheduledPostId, userId },
             include: { socialAccount: { select: { platform: true, metadata: true } } }
         });
 

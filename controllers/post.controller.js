@@ -54,6 +54,13 @@ export const createPost = async (req, res) => {
         const resolvedScheduled = scheduledFor || scheduledAt;
         const isScheduled = !!resolvedScheduled && new Date(resolvedScheduled) > new Date();
 
+        if (socialAccountId) {
+            const ownedAccount = await SocialAccount.findOne({ _id: socialAccountId, userId: req.userId }).lean();
+            if (!ownedAccount) {
+                return res.status(403).json({ success: false, message: "Social account not found or unauthorized" });
+            }
+        }
+
         // If explicitly scheduled, create ScheduledPost entries per platform
         if (isScheduled || status === "scheduled") {
             const scheduledDocs = [];
@@ -134,7 +141,7 @@ export const getPosts = async (req, res) => {
     try {
         const { status, limit = 50 } = req.query;
         const query = { userId: req.userId };
-        
+
         // Support filtering by comma-separated status values
         if (status) {
             const statuses = status.split(",").map((s) => s.trim());
@@ -239,7 +246,7 @@ export const deletePost = async (req, res) => {
 export const getContentQueue = async (req, res) => {
     try {
         const queueItems = await ContentQueue.find({ userId: req.userId }).sort({ createdAt: -1 }).lean();
-        
+
         // Also include Post docs that are in 'queued' status
         const queuedPosts = await Post.find({ userId: req.userId, status: "queued" })
             .sort({ createdAt: -1 })
@@ -358,7 +365,7 @@ export const fetchExternalContent = async (req, res) => {
 export const publishPostNow = async (req, res) => {
     try {
         let post = await Post.findOne({ _id: req.params.id, userId: req.userId });
-        
+
         // Also check if it's in ContentQueue
         if (!post) {
             const queueItem = await ContentQueue.findOne({ _id: req.params.id, userId: req.userId });

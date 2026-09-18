@@ -1,5 +1,6 @@
 import express from "express";
 import multer from "multer";
+import authMiddleware from "../middleware/auth.js";
 
 import {
     connectFacebook,
@@ -74,6 +75,8 @@ router.get(
     "/callback",
     facebookCallback
 );
+
+router.use(authMiddleware);
 
 
 // =====================================================

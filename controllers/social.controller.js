@@ -4,16 +4,8 @@ import User from "../models/user.model.js";
 export const getConnectedAccounts = async (req, res) => {
     try {
         const userId = req.userId?.toString();
-        const user = req.userId ? await User.findById(req.userId).lean() : null;
-        const userEmail = user?.email;
-
-        const orConditions = [
-            ...(req.userId ? [{ userId: req.userId }, { userId: userId }] : []),
-            ...(userEmail ? [{ email: userEmail }] : []),
-            { userId: "temp-user-001" }
-        ];
-
-        let accounts = await SocialAccount.find({ $or: orConditions }).lean();
+        if (!userId) return res.status(401).json({ message: "Unauthenticated" });
+        const accounts = await SocialAccount.find({ userId }).lean();
 
         const normalized = accounts.map(acc => ({
             _id: acc._id,
@@ -39,9 +31,9 @@ export const disconnectAccount = async (req, res) => {
         const userId = req.userId?.toString();
 
         // Support disconnect by MongoDB _id or platform name, but only for this user.
-        let deleted = await SocialAccount.findOneAndDelete({ _id: id, userId: { $in: [req.userId, userId] } });
+        let deleted = await SocialAccount.findOneAndDelete({ _id: id, userId });
         if (!deleted) {
-            deleted = await SocialAccount.findOneAndDelete({ platform: id, userId: { $in: [req.userId, userId] } });
+            deleted = await SocialAccount.findOneAndDelete({ platform: id, userId });
         }
 
         res.status(deleted ? 200 : 404).json({ success: Boolean(deleted), message: deleted ? "Account disconnected" : "Account not found" });

@@ -1,4 +1,3 @@
-import jwt from "jsonwebtoken";
 import SocialAccount from "../../models/socialAccount.model.js";
 import LinkedInPost from "../../models/linkedinPost.model.js";
 import Post from "../../models/post.model.js";
@@ -11,58 +10,17 @@ import User from "../../models/user.model.js";
 export async function getLinkedInAccount(req) {
     let userId = req.userId?.toString();
 
-    // Try Authorization header if req.userId not populated
-    if (!userId && req.headers?.authorization) {
-        try {
-            const token = req.headers.authorization.split(" ")[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            userId = decoded?.id || decoded?._id || decoded?.userId;
-        } catch {
-            // ignore token decode errors
-        }
-    }
-
-    // Try query token
-    if (!userId && req.query?.token) {
-        try {
-            const decoded = jwt.verify(req.query.token, process.env.JWT_SECRET);
-            userId = decoded?.id || decoded?._id || decoded?.userId;
-        } catch {
-            // ignore
-        }
-    }
-
-    let account = null;
-
-    if (userId) {
-        account = await SocialAccount.findOne({
-            platform: "linkedin",
-            $or: [{ userId }, { userId: userId.toString() }]
-        });
-    }
-
-    // Fallback: match by temp-user-001 or most recent active LinkedIn account
-    if (!account) {
-        account = await SocialAccount.findOne({
-            platform: "linkedin",
-            $or: [{ userId: "temp-user-001" }, { platform: "linkedin" }]
-        }).sort({ updatedAt: -1 });
-    }
+    if (!userId) return null;
+    const account = await SocialAccount.findOne({ platform: "linkedin", userId });
 
     if (!account) {
         return null;
     }
 
-    // Auto-link to logged-in user if not already linked
-    if (userId && account.userId !== userId) {
-        await SocialAccount.updateOne({ _id: account._id }, { $set: { userId } });
-        account.userId = userId;
-    }
-
     const author = `urn:li:person:${account.platformUserId}`;
     return {
         account,
-        userId: account.userId || userId || "temp-user-001",
+        userId,
         author,
         accessToken: account.accessToken,
         version: process.env.LINKEDIN_VERSION || "202601"
@@ -84,7 +42,7 @@ export async function recordPublishedPost({
     try {
         // 1. Save to LinkedInPost
         await LinkedInPost.create({
-            userId: userId || "temp-user-001",
+            userId,
             socialAccountId,
             linkedinPostId: platformPostId,
             authorUrn: content?.author || "",
@@ -97,18 +55,9 @@ export async function recordPublishedPost({
         });
 
         // 2. Save to Post model for unified dashboard / queue display
-        // If userId is a valid MongoDB ObjectId, use it; otherwise find or fallback
-        let validUserObjectId = null;
-        if (userId && userId.length === 24 && /^[0-9a-fA-F]{24}$/.test(userId)) {
-            validUserObjectId = userId;
-        } else {
-            const anyUser = await User.findOne().sort({ createdAt: -1 }).select('_id').lean();
-            if (anyUser) validUserObjectId = anyUser._id;
-        }
-
-        if (validUserObjectId) {
+        if (userId) {
             await Post.create({
-                userId: validUserObjectId,
+                userId,
                 socialAccountId,
                 platform: "linkedin",
                 platforms: ["linkedin"],

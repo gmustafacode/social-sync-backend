@@ -3,7 +3,6 @@ import axios from "axios";
 import SocialAccount from "../../models/socialAccount.model.js";
 
 
-const TEMP_USER_ID = "temp-user-001";
 
 
 // =====================================================
@@ -44,8 +43,7 @@ export const deletePost = async (
         const account =
             await SocialAccount.findOne({
 
-                userId:
-                    TEMP_USER_ID,
+                userId: req.userId,
 
                 platform:
                     "x"

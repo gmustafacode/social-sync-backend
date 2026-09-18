@@ -31,7 +31,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
         // 2. Reset the LinkedInPost status
         await db.linkedInPost.update({
-            where: { id },
+            where: { id, userId },
             data: {
                 status: 'PENDING',
                 errorMessage: null
@@ -46,7 +46,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
         if (existingScheduled) {
             // Reset the existing scheduled post for re-processing
             await db.scheduledPost.update({
-                where: { id: existingScheduled.id },
+                where: { id: existingScheduled.id, userId },
                 data: {
                     status: 'pending',
                     scheduledAt: new Date(), // Process immediately

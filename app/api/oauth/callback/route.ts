@@ -52,7 +52,12 @@ export async function GET(request: Request) {
     let customRedirect: string | null = null;
 
     if (accountId) {
-        customConfig = await db.socialAccount.findUnique({ where: { id: accountId } });
+        customConfig = await db.socialAccount.findUnique({
+            where: { id: accountId, userId: (session.user as any).id }
+        });
+        if (!customConfig) {
+            return NextResponse.json({ error: "Unauthorized account access" }, { status: 403 });
+        }
         if (customConfig) {
             const { decrypt } = await import('@/lib/encryption');
 

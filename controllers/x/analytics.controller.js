@@ -26,7 +26,7 @@ export const getAnalytics = async (
             await SocialAccount.findOne({
 
                 userId:
-                    TEMP_USER_ID,
+                    req.userId,
 
                 platform:
                     "x"

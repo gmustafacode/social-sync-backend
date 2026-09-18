@@ -17,13 +17,12 @@ const GRAPH_URL =
     `https://graph.instagram.com/${API_VERSION}`;
 
 
-const getAccount = async () => {
+const getAccount = async (userId) => {
 
     const account =
         await SocialAccount.findOne({
 
-            userId:
-                TEMP_USER_ID,
+            userId,
 
             platform:
                 "instagram"
@@ -51,137 +50,221 @@ const getAccount = async () => {
 // =====================================================
 
 export const createStory =
-async (req, res) => {
+    async (req, res) => {
 
-    try {
+        try {
 
-        const {
+            const {
 
-            mediaUrl,
+                mediaUrl,
 
-            mediaType
+                mediaType
 
-        } = req.body;
-
-
-        if (!mediaUrl) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "mediaUrl is required"
-
-            });
-
-        }
+            } = req.body;
 
 
-        if (
-            !["IMAGE", "VIDEO"]
-                .includes(
-                    mediaType
-                )
-        ) {
+            if (!mediaUrl) {
 
-            return res.status(400).json({
+                return res.status(400).json({
 
-                success: false,
+                    success: false,
 
-                message:
-                    "mediaType must be IMAGE or VIDEO"
+                    message:
+                        "mediaUrl is required"
 
-            });
+                });
 
-        }
+            }
 
 
-        const account =
-            await getAccount();
+            if (
+                !["IMAGE", "VIDEO"]
+                    .includes(
+                        mediaType
+                    )
+            ) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message:
+                        "mediaType must be IMAGE or VIDEO"
+
+                });
+
+            }
 
 
-        // ---------------------------------------------
-        // CREATE STORY CONTAINER
-        // ---------------------------------------------
-
-        const params = {
-
-            media_type:
-                "STORIES",
-
-            access_token:
-                account.accessToken
-
-        };
+            const account =
+                await getAccount(req.userId);
 
 
-        if (
-            mediaType ===
-            "VIDEO"
-        ) {
+            // ---------------------------------------------
+            // CREATE STORY CONTAINER
+            // ---------------------------------------------
 
-            params.video_url =
-                mediaUrl;
+            const params = {
 
-        } else {
+                media_type:
+                    "STORIES",
 
-            params.image_url =
-                mediaUrl;
+                access_token:
+                    account.accessToken
 
-        }
+            };
 
 
-        const containerResponse =
-            await axios.post(
+            if (
+                mediaType ===
+                "VIDEO"
+            ) {
 
-                `${GRAPH_URL}/${account.platformUserId}/media`,
+                params.video_url =
+                    mediaUrl;
 
-                null,
+            } else {
 
-                {
+                params.image_url =
+                    mediaUrl;
 
-                    params
+            }
+
+
+            const containerResponse =
+                await axios.post(
+
+                    `${GRAPH_URL}/${account.platformUserId}/media`,
+
+                    null,
+
+                    {
+
+                        params
+
+                    }
+
+                );
+
+
+            const containerId =
+                containerResponse.data.id;
+
+
+            // ---------------------------------------------
+            // WAIT
+            // ---------------------------------------------
+
+            let status = null;
+
+
+            for (
+                let i = 0;
+                i < 15;
+                i++
+            ) {
+
+                await new Promise(
+                    resolve =>
+                        setTimeout(resolve, 3000)
+                );
+
+
+                const statusResponse =
+                    await axios.get(
+
+                        `${GRAPH_URL}/${containerId}`,
+
+                        {
+
+                            params: {
+
+                                fields:
+                                    "id,status_code,status",
+
+                                access_token:
+                                    account.accessToken
+
+                            }
+
+                        }
+
+                    );
+
+
+                status =
+                    statusResponse.data;
+
+
+                if (
+                    status.status_code ===
+                    "FINISHED"
+                ) {
+
+                    break;
 
                 }
 
-            );
+
+                if (
+                    status.status_code ===
+                    "ERROR"
+                ) {
+
+                    return res.status(400).json({
+
+                        success: false,
+
+                        message:
+                            "Instagram Story processing failed",
+
+                        status
+
+                    });
+
+                }
+
+            }
 
 
-        const containerId =
-            containerResponse.data.id;
+            if (
+                status?.status_code !==
+                "FINISHED"
+            ) {
+
+                return res.status(408).json({
+
+                    success: false,
+
+                    message:
+                        "Story is still processing",
+
+                    containerId,
+
+                    status
+
+                });
+
+            }
 
 
-        // ---------------------------------------------
-        // WAIT
-        // ---------------------------------------------
+            // ---------------------------------------------
+            // PUBLISH
+            // ---------------------------------------------
 
-        let status = null;
+            const publishResponse =
+                await axios.post(
 
+                    `${GRAPH_URL}/${account.platformUserId}/media_publish`,
 
-        for (
-            let i = 0;
-            i < 15;
-            i++
-        ) {
-
-            await new Promise(
-                resolve =>
-                    setTimeout(resolve, 3000)
-            );
-
-
-            const statusResponse =
-                await axios.get(
-
-                    `${GRAPH_URL}/${containerId}`,
+                    null,
 
                     {
 
                         params: {
 
-                            fields:
-                                "id,status_code,status",
+                            creation_id:
+                                containerId,
 
                             access_token:
                                 account.accessToken
@@ -193,120 +276,36 @@ async (req, res) => {
                 );
 
 
-            status =
-                statusResponse.data;
+            res.json({
+
+                success: true,
+
+                message:
+                    "Instagram Story published successfully",
+
+                containerId,
+
+                mediaId:
+                    publishResponse.data.id
+
+            });
 
 
-            if (
-                status.status_code ===
-                "FINISHED"
-            ) {
+        } catch (error) {
 
-                break;
-
-            }
-
-
-            if (
-                status.status_code ===
-                "ERROR"
-            ) {
-
-                return res.status(400).json({
-
-                    success: false,
-
-                    message:
-                        "Instagram Story processing failed",
-
-                    status
-
-                });
-
-            }
-
-        }
-
-
-        if (
-            status?.status_code !==
-            "FINISHED"
-        ) {
-
-            return res.status(408).json({
+            res.status(500).json({
 
                 success: false,
 
                 message:
-                    "Story is still processing",
+                    "Instagram Story failed",
 
-                containerId,
-
-                status
+                instagramError:
+                    error.response?.data ||
+                    error.message
 
             });
 
         }
 
-
-        // ---------------------------------------------
-        // PUBLISH
-        // ---------------------------------------------
-
-        const publishResponse =
-            await axios.post(
-
-                `${GRAPH_URL}/${account.platformUserId}/media_publish`,
-
-                null,
-
-                {
-
-                    params: {
-
-                        creation_id:
-                            containerId,
-
-                        access_token:
-                            account.accessToken
-
-                    }
-
-                }
-
-            );
-
-
-        res.json({
-
-            success: true,
-
-            message:
-                "Instagram Story published successfully",
-
-            containerId,
-
-            mediaId:
-                publishResponse.data.id
-
-        });
-
-
-    } catch (error) {
-
-        res.status(500).json({
-
-            success: false,
-
-            message:
-                "Instagram Story failed",
-
-            instagramError:
-                error.response?.data ||
-                error.message
-
-        });
-
-    }
-
-};
+    };

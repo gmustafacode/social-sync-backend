@@ -35,7 +35,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
         // Reset the ScheduledPost to pending so the scheduler picks it up immediately
         await db.scheduledPost.update({
-            where: { id },
+            where: { id, userId },
             data: {
                 status: 'pending',
                 scheduledAt: new Date(), // Process immediately

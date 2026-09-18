@@ -20,7 +20,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     try {
         // Fetch content item
         const queueItem = await db.contentQueue.findUnique({
-            where: { id: contentId }
+            where: { id: contentId, userId }
         });
 
         if (!queueItem || queueItem.userId !== userId) {
@@ -112,7 +112,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
 
         // Mark the content queue item as approved
         await db.contentQueue.update({
-            where: { id: contentId },
+            where: { id: contentId, userId },
             data: { status: 'approved' }
         });
 

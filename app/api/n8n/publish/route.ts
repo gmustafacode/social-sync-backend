@@ -13,7 +13,7 @@ export async function POST(req: Request) {
         const apiKey = authHeader?.replace("Bearer ", "");
         const expectedKey = process.env.N8N_API_KEY;
 
-        if (expectedKey && apiKey !== expectedKey) {
+        if (!expectedKey || apiKey !== expectedKey) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 

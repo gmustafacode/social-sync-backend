@@ -1,4 +1,5 @@
 import express from "express";
+import authMiddleware from "../middleware/auth.js";
 
 
 // OAuth / Account
@@ -57,6 +58,8 @@ router.get(
     "/callback",
     xCallback
 );
+
+router.use(authMiddleware);
 
 
 // =====================================================

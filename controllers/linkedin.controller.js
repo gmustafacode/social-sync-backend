@@ -98,8 +98,8 @@ export const linkedInCallback = async (req, res) => {
         console.log("LinkedIn User:", linkedinUser);
 
         // RESOLVE USER ID
-        let resolvedUserId = null;
-        if (state) {
+        let resolvedUserId = req.userId?.toString() || null;
+        if (!resolvedUserId && state) {
             try {
                 const decoded = jwt.verify(state, process.env.JWT_SECRET);
                 if (decoded?.id) resolvedUserId = decoded.id;
@@ -109,16 +109,7 @@ export const linkedInCallback = async (req, res) => {
         }
 
         // Try matching by email
-        if (!resolvedUserId && linkedinUser.email) {
-            const matchedUser = await User.findOne({ email: linkedinUser.email });
-            if (matchedUser) resolvedUserId = matchedUser._id.toString();
-        }
-
-        // Fallback: use recent user
-        if (!resolvedUserId) {
-            const anyUser = await User.findOne().sort({ createdAt: -1 });
-            resolvedUserId = anyUser ? anyUser._id.toString() : TEMP_USER_ID;
-        }
+        if (!resolvedUserId) return res.status(401).json({ success: false, message: "Unauthenticated" });
 
         let expiresAt = null;
         if (expires_in) {
@@ -129,10 +120,8 @@ export const linkedInCallback = async (req, res) => {
         const socialAccount = await SocialAccount.findOneAndUpdate(
             {
                 platform: "linkedin",
-                $or: [
-                    { platformUserId: linkedinUser.sub },
-                    { userId: resolvedUserId }
-                ]
+                userId: resolvedUserId,
+                platformUserId: linkedinUser.sub
             },
             {
                 userId: resolvedUserId,
@@ -187,15 +176,11 @@ export const getLinkedInProfile = async (req, res) => {
         );
 
 
-        const targetUserId = req.userId || TEMP_USER_ID;
+        const targetUserId = req.userId?.toString();
+        if (!targetUserId) return res.status(401).json({ success: false, message: "Unauthenticated" });
         const socialAccount = await SocialAccount.findOne({
             platform: "linkedin",
-            $or: [
-                ...(req.userId ? [{ userId: req.userId }, { userId: req.userId.toString() }] : []),
-                { userId: targetUserId },
-                { userId: TEMP_USER_ID },
-                { platform: "linkedin" }
-            ]
+            userId: targetUserId
         }).lean();
 
 

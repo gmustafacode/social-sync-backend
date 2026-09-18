@@ -6,7 +6,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "build": "node scripts/build-check.js",
+    "test": "npm run test:isolation",
+    "test:isolation": "node --test test/isolation.test.js"
   },
   "dependencies": {
     "axios": "^1.6.0",

@@ -48,8 +48,8 @@ export const deleteLinkedInPost = async (req, res) => {
         }
 
         // Cleanup local DB records
-        await LinkedInPost.findOneAndDelete({ linkedinPostId: postId });
-        await Post.findOneAndDelete({ platformPostId: postId });
+        await LinkedInPost.findOneAndDelete({ linkedinPostId: postId, userId: req.userId });
+        await Post.findOneAndDelete({ platformPostId: postId, userId: req.userId });
 
         return res.status(200).json({
             success: true,
