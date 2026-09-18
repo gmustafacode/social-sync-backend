@@ -11,6 +11,8 @@ export async function processIngestedContent(
     let duplicateCount = 0;
     let errorCount = 0;
 
+    const a = 100;
+
     for (const item of items) {
         try {
             // 1. Validation
