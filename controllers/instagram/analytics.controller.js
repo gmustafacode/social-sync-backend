@@ -18,7 +18,7 @@ export const getAccountAnalytics = async (
     try {
 
         const account =
-            await getInstagramAccount();
+            await getInstagramAccount(req.userId);
 
 
         const metric =
@@ -59,7 +59,8 @@ export const getAccountAnalytics = async (
 
                 `${account.platformUserId}/insights`,
 
-                params
+                params,
+                req.userId
 
             );
 
@@ -116,7 +117,8 @@ export const getMediaAnalytics = async (
 
                 {
                     metric
-                }
+                },
+                req.userId
 
             );
 

@@ -1,6 +1,7 @@
 import axios from "axios";
 import crypto from "crypto";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
 
 import SocialAccount from "../models/socialAccount.model.js";
 
@@ -54,9 +55,21 @@ export const connectInstagram = async (
             crypto.randomBytes(32)
                 .toString("hex");
 
+        let userId = null;
+        const token = req.query?.token;
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                userId = (decoded?.id || decoded?._id || decoded?.userId)?.toString();
+            } catch {
+                return res.status(401).json({ success: false, message: "Invalid session token" });
+            }
+        }
+
 
         req.app.locals.instagramOAuth = {
-            state
+            state,
+            userId
         };
 
 
@@ -387,7 +400,7 @@ export const instagramCallback = async (
 
                 {
                     userId:
-                        TEMP_USER_ID,
+                        savedOAuth?.userId || TEMP_USER_ID,
 
                     platform:
                         "instagram"
@@ -397,7 +410,7 @@ export const instagramCallback = async (
                 {
 
                     userId:
-                        TEMP_USER_ID,
+                        savedOAuth?.userId || TEMP_USER_ID,
 
                     platform:
                         "instagram",

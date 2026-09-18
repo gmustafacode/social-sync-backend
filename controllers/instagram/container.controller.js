@@ -2,10 +2,11 @@ import {
     instagramGraphGet,
     getInstagramError
 } from "../../config/instagram.js";
+{
 
-
-// =====================================================
-// GET CONTAINER STATUS
+    // =====================================================
+},
+req.userId
 // GET /api/social/instagram/container/:containerId
 // =====================================================
 
@@ -24,7 +25,8 @@ export const getContainerStatus = async (
                 {
                     fields:
                         "id,status_code,status"
-                }
+                },
+                req.userId
             );
 
 

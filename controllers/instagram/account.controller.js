@@ -18,7 +18,7 @@ export const getAccount = async (
     try {
 
         const account =
-            await getInstagramAccount();
+            await getInstagramAccount(req.userId);
 
 
         const profile =
@@ -27,7 +27,8 @@ export const getAccount = async (
                 {
                     fields:
                         "id,user_id,username,name,profile_picture_url,account_type,media_count,followers_count"
-                }
+                },
+                req.userId
             );
 
 
@@ -107,7 +108,7 @@ export const getMedia = async (
     try {
 
         const account =
-            await getInstagramAccount();
+            await getInstagramAccount(req.userId);
 
 
         const limit =
@@ -137,7 +138,8 @@ export const getMedia = async (
         const data =
             await instagramGraphGet(
                 `${account.platformUserId}/media`,
-                params
+                params,
+                req.userId
             );
 
 
@@ -187,7 +189,8 @@ export const getSingleMedia = async (
                 {
                     fields:
                         "id,caption,media_type,media_product_type,media_url,thumbnail_url,permalink,timestamp,username,like_count,comments_count"
-                }
+                },
+                req.userId
             );
 
 

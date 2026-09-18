@@ -21,15 +21,15 @@ const getGraphBaseUrl = () => {
 // GET STORED INSTAGRAM ACCOUNT
 // =====================================================
 
-export const getInstagramAccount = async () => {
+export const getInstagramAccount = async (userId) => {
 
-    const userId =
-        process.env.TEMP_USER_ID || "temp-user-001";
+    const accountUserId =
+        userId || process.env.TEMP_USER_ID || "temp-user-001";
 
 
     const account =
         await SocialAccount.findOne({
-            userId,
+            userId: accountUserId,
             platform: "instagram"
         });
 
@@ -68,11 +68,12 @@ export const getInstagramAccount = async () => {
 
 export const instagramGraphGet = async (
     endpoint,
-    params = {}
+    params = {},
+    userId
 ) => {
 
     const account =
-        await getInstagramAccount();
+        await getInstagramAccount(userId);
 
 
     const cleanEndpoint =
@@ -112,11 +113,12 @@ export const instagramGraphGet = async (
 
 export const instagramGraphPost = async (
     endpoint,
-    body = {}
+    body = {},
+    userId
 ) => {
 
     const account =
-        await getInstagramAccount();
+        await getInstagramAccount(userId);
 
 
     const cleanEndpoint =
@@ -183,11 +185,12 @@ export const instagramGraphPost = async (
 // =====================================================
 
 export const instagramGraphDelete = async (
-    endpoint
+    endpoint,
+    userId
 ) => {
 
     const account =
-        await getInstagramAccount();
+        await getInstagramAccount(userId);
 
 
     const cleanEndpoint =

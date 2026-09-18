@@ -40,6 +40,10 @@ import {
     createCarouselPost
 } from "../controllers/instagram/carouselPost.controller.js";
 
+import {
+    createStory
+} from "../controllers/instagram/story.controller.js";
+
 
 // Container
 import {
@@ -144,6 +148,11 @@ router.post(
 router.post(
     "/post/carousel",
     createCarouselPost
+);
+
+router.post(
+    "/post/story",
+    createStory
 );
 
 

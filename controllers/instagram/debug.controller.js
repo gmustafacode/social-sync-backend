@@ -18,7 +18,7 @@ export const debugInstagram = async (
     try {
 
         const account =
-            await getInstagramAccount();
+            await getInstagramAccount(req.userId);
 
 
         const profile =
@@ -27,7 +27,8 @@ export const debugInstagram = async (
                 {
                     fields:
                         "id,user_id,username,name,account_type,media_count,followers_count"
-                }
+                },
+                req.userId
             );
 
 

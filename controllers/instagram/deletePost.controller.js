@@ -36,7 +36,8 @@ export const deleteInstagramPost = async (
 
         const result =
             await instagramGraphDelete(
-                mediaId
+                mediaId,
+                req.userId
             );
 
 

@@ -5,317 +5,38 @@ import {
     getInstagramError
 } from "../../config/instagram.js";
 
-
-// =====================================================
-// WAIT FOR VIDEO CHILD
-// =====================================================
-
-const waitForVideoChild = async (
-    containerId
-) => {
-
-    for (
-        let attempt = 1;
-        attempt <= 5;
-        attempt++
-    ) {
-
-        const status =
-            await instagramGraphGet(
-
-                containerId,
-
-                {
-                    fields:
-                        "id,status_code,status"
-                }
-            );
-
-
-        if (
-            status.status_code ===
-            "FINISHED"
-        ) {
-
-            return status;
-        }
-
-
-        if (
-            status.status_code === "ERROR" ||
-            status.status_code === "EXPIRED"
-        ) {
-
-            throw new Error(
-                status.status ||
-                status.status_code
-            );
-        }
-
-
-        if (
-            attempt < 5
-        ) {
-
-            await new Promise(
-                resolve =>
-                    setTimeout(
-                        resolve,
-                        60 * 1000
-                    )
-            );
-        }
+const waitForVideoChild = async (containerId, userId) => {
+    for (let attempt = 1; attempt <= 5; attempt += 1) {
+        const status = await instagramGraphGet(containerId, { fields: "id,status_code,status" }, userId);
+        if (status.status_code === "FINISHED") return status;
+        if (["ERROR", "EXPIRED"].includes(status.status_code)) throw new Error(status.status || status.status_code);
+        if (attempt < 5) await new Promise((resolve) => setTimeout(resolve, 60 * 1000));
     }
-
-
-    throw new Error(
-        "Carousel video child did not finish"
-    );
+    throw new Error("Carousel video child did not finish");
 };
 
-
-// =====================================================
-// CREATE CAROUSEL
-// POST /api/social/instagram/post/carousel
-// =====================================================
-
-export const createCarouselPost = async (
-    req,
-    res
-) => {
-
+export const createCarouselPost = async (req, res) => {
     try {
-
-        const {
-            items,
-            caption = ""
-        } = req.body;
-
-
-        if (!Array.isArray(items)) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "items must be an array"
-
-            });
-        }
-
-
-        if (
-            items.length < 2 ||
-            items.length > 10
-        ) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Carousel must contain 2 to 10 items"
-
-            });
-        }
-
-
-        const account =
-            await getInstagramAccount();
-
-
+        const { items, caption = "" } = req.body;
+        if (!Array.isArray(items) || items.length < 2 || items.length > 10) return res.status(400).json({ success: false, message: "Carousel must contain 2 to 10 items" });
+        const account = await getInstagramAccount(req.userId);
         const childContainerIds = [];
-
-
-        // =================================================
-        // CREATE CHILD CONTAINERS
-        // =================================================
-
-        for (
-            const item of items
-        ) {
-
-            if (
-                !item.type ||
-                !item.url
-            ) {
-
-                throw new Error(
-                    "Every carousel item needs type and url"
-                );
-            }
-
-
-            const type =
-                String(
-                    item.type
-                ).toUpperCase();
-
-
-            let container;
-
-
-            if (type === "IMAGE") {
-
-                container =
-                    await instagramGraphPost(
-
-                        `${account.platformUserId}/media`,
-
-                        {
-
-                            image_url:
-                                item.url,
-
-                            is_carousel_item:
-                                true
-
-                        }
-                    );
-
-            } else if (
-                type === "VIDEO"
-            ) {
-
-                container =
-                    await instagramGraphPost(
-
-                        `${account.platformUserId}/media`,
-
-                        {
-
-                            media_type:
-                                "REELS",
-
-                            video_url:
-                                item.url,
-
-                            is_carousel_item:
-                                true
-
-                        }
-                    );
-
-
-                await waitForVideoChild(
-                    container.id
-                );
-
-            } else {
-
-                throw new Error(
-                    "Carousel item type must be IMAGE or VIDEO"
-                );
-            }
-
-
-            if (!container.id) {
-
-                throw new Error(
-                    "Carousel child container ID missing"
-                );
-            }
-
-
-            childContainerIds.push(
-                container.id
-            );
+        for (const item of items) {
+            if (!item?.url || !item?.type) throw new Error("Every carousel item needs type and url");
+            const type = String(item.type).toUpperCase();
+            const body = type === "IMAGE" ? { image_url: item.url, is_carousel_item: true } : type === "VIDEO" ? { media_type: "REELS", video_url: item.url, is_carousel_item: true } : null;
+            if (!body) throw new Error("Carousel item type must be IMAGE or VIDEO");
+            const container = await instagramGraphPost(`${account.platformUserId}/media`, body, req.userId);
+            if (!container.id) throw new Error("Instagram carousel child container ID missing");
+            if (type === "VIDEO") await waitForVideoChild(container.id, req.userId);
+            childContainerIds.push(container.id);
         }
-
-
-        // =================================================
-        // CREATE PARENT CAROUSEL CONTAINER
-        // =================================================
-
-        const carouselContainer =
-            await instagramGraphPost(
-
-                `${account.platformUserId}/media`,
-
-                {
-
-                    media_type:
-                        "CAROUSEL",
-
-                    children:
-                        childContainerIds.join(","),
-
-                    caption
-
-                }
-            );
-
-
-        const carouselId =
-            carouselContainer.id;
-
-
-        if (!carouselId) {
-
-            throw new Error(
-                "Carousel container ID missing"
-            );
-        }
-
-
-        // =================================================
-        // PUBLISH CAROUSEL
-        // =================================================
-
-        const published =
-            await instagramGraphPost(
-
-                `${account.platformUserId}/media_publish`,
-
-                {
-
-                    creation_id:
-                        carouselId
-
-                }
-            );
-
-
-        return res.json({
-
-            success: true,
-
-            message:
-                "Instagram carousel published successfully",
-
-            childContainerIds,
-
-            carouselContainerId:
-                carouselId,
-
-            mediaId:
-                published.id
-
-        });
-
+        const carousel = await instagramGraphPost(`${account.platformUserId}/media`, { media_type: "CAROUSEL", children: childContainerIds.join(","), caption }, req.userId);
+        if (!carousel.id) throw new Error("Instagram carousel container ID missing");
+        const published = await instagramGraphPost(`${account.platformUserId}/media_publish`, { creation_id: carousel.id }, req.userId);
+        return res.json({ success: true, message: "Instagram carousel published successfully", childContainerIds, carouselContainerId: carousel.id, mediaId: published.id });
     } catch (error) {
-
-        console.error(
-            "Instagram carousel error:",
-            error?.response?.data ||
-            error
-        );
-
-
-        return res.status(500).json({
-
-            success: false,
-
-            message:
-                "Instagram carousel publish failed",
-
-            instagramError:
-                getInstagramError(error),
-
-            error:
-                error.message
-
-        });
+        console.error("Instagram carousel error:", error?.response?.data || error);
+        return res.status(error.statusCode || 500).json({ success: false, message: "Instagram carousel publish failed", instagramError: getInstagramError(error), error: error.message });
     }
 };

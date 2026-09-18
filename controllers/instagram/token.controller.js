@@ -21,7 +21,7 @@ export const refreshInstagramToken = async (
     try {
 
         const account =
-            await getInstagramAccount();
+            await getInstagramAccount(req.userId);
 
 
         const response =
