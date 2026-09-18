@@ -16,8 +16,9 @@ export interface NormalizedContent {
     metadata?: any;
 }
 
-    const a = 1000000;
-    
+const a: number = 10000000;
+
+
 export interface IngestionResult {
     source: ContentSourceType;
     fetched: number;

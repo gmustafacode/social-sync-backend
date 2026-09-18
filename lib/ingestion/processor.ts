@@ -11,7 +11,7 @@ export async function processIngestedContent(
     let duplicateCount = 0;
     let errorCount = 0;
 
-    const a = 1000000;
+    const a:number = 10000000;
 
     for (const item of items) {
         try {
