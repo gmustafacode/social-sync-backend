@@ -51,10 +51,6 @@ export const connectInstagram = async (
 
     try {
 
-        const state =
-            crypto.randomBytes(32)
-                .toString("hex");
-
         let userId = null;
         const token = req.query?.token;
         if (token) {
@@ -66,11 +62,14 @@ export const connectInstagram = async (
             }
         }
 
-
-        req.app.locals.instagramOAuth = {
-            state,
-            userId
-        };
+        const state = jwt.sign(
+            {
+                nonce: crypto.randomBytes(32).toString("hex"),
+                userId
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: "10m" }
+        );
 
 
         const params =
@@ -170,13 +169,17 @@ export const instagramCallback = async (
         // STATE CHECK
         // ---------------------------------------------
 
-        const savedOAuth =
-            req.app.locals.instagramOAuth;
+        let savedOAuth;
+        try {
+            savedOAuth = jwt.verify(state, process.env.JWT_SECRET);
+        } catch {
+            savedOAuth = null;
+        }
 
 
         if (
             !savedOAuth ||
-            savedOAuth.state !== state
+            typeof savedOAuth !== "object"
         ) {
 
             return res.status(400).json({
@@ -188,7 +191,6 @@ export const instagramCallback = async (
 
             });
         }
-
 
         // ---------------------------------------------
         // CODE CHECK
@@ -469,9 +471,6 @@ export const instagramCallback = async (
                 }
             );
 
-
-        // CLEAN OAUTH STATE
-        delete req.app.locals.instagramOAuth;
 
         const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=instagram&name=${encodeURIComponent(account.username || account.name || 'Instagram')}`);

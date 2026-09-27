@@ -1,12 +1,8 @@
 import axios from "axios";
 import dotenv from "dotenv";
-import SocialAccount from "../../models/socialAccount.model.js";
+import { getInstagramAccount } from "../../config/instagram.js";
 
 dotenv.config();
-
-
-const TEMP_USER_ID =
-    process.env.TEMP_USER_ID || "temp-user-001";
 
 
 const API_VERSION =
@@ -17,31 +13,7 @@ const GRAPH_URL =
     `https://graph.instagram.com/${API_VERSION}`;
 
 
-const getAccount = async (userId) => {
-
-    const account =
-        await SocialAccount.findOne({
-
-            userId,
-
-            platform:
-                "instagram"
-
-        });
-
-
-    if (!account) {
-
-        throw new Error(
-            "Instagram account not connected"
-        );
-
-    }
-
-
-    return account;
-
-};
+const getAccount = getInstagramAccount;
 
 
 // =====================================================

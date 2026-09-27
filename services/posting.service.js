@@ -224,21 +224,40 @@ const publishToX = async (account, post, accessToken) => {
 
 const publishToInstagram = async (account, post, accessToken) => {
     const apiVersion = process.env.INSTAGRAM_API_VERSION || "v25.0";
-    const graphUrl = `https://graph.facebook.com/${apiVersion}`;
+    const graphUrl = `https://graph.instagram.com/${apiVersion}`;
 
     const mediaUrl = post.mediaUrl || (post.mediaUrls && post.mediaUrls[0]);
     if (!mediaUrl) throw new Error("Instagram requires a media URL (image or video) to publish.");
 
+    const isVideo = (post.postType || "").toUpperCase() === "VIDEO" ||
+        (post.postType || "").toUpperCase() === "REEL";
+    const mediaParams = isVideo
+        ? { media_type: "REELS", video_url: mediaUrl, caption: post.contentText }
+        : { image_url: mediaUrl, caption: post.contentText };
+
     const containerRes = await axios.post(`${graphUrl}/${account.platformUserId}/media`, null, {
-        params: {
-            image_url: mediaUrl,
-            caption: post.contentText,
-            access_token: accessToken
-        }
+        params: { ...mediaParams, access_token: accessToken }
     });
 
     const containerId = containerRes.data?.id;
     if (!containerId) throw new Error("Instagram container ID not received.");
+
+    if (isVideo) {
+        let status;
+        for (let attempt = 0; attempt < 12; attempt += 1) {
+            status = (await axios.get(`${graphUrl}/${containerId}`, {
+                params: { fields: "status_code,status", access_token: accessToken }
+            })).data;
+            if (status.status_code === "FINISHED") break;
+            if (["ERROR", "EXPIRED"].includes(status.status_code)) {
+                throw new Error(`Instagram video container failed: ${status.status || status.status_code}`);
+            }
+            await new Promise((resolve) => setTimeout(resolve, 10000));
+        }
+        if (status?.status_code !== "FINISHED") {
+            throw new Error("Instagram video container did not finish within 2 minutes.");
+        }
+    }
 
     const publishRes = await axios.post(`${graphUrl}/${account.platformUserId}/media_publish`, null, {
         params: {

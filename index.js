@@ -23,6 +23,7 @@ import linkedinRoutes from "./routes/linkedin.routes.js";
 import xRoutes from "./routes/x.routes.js";
 import facebookRoutes from "./routes/facebook.routes.js";
 import instagramRoutes from "./routes/instagram.routes.js";
+import tiktokRoutes from "./routes/tiktok.routes.js";
 import mediaRoutes from "./routes/media.routes.js";
 
 const app = express();
@@ -85,6 +86,7 @@ app.use("/api/social/linkedin", linkedinRoutes);
 app.use("/api/social/x", xRoutes);
 app.use("/api/social/facebook", facebookRoutes);
 app.use("/api/social/instagram", instagramRoutes);
+app.use("/api/social/tiktok", tiktokRoutes);
 
 // Global Error Handler
 app.use((err, req, res, next) => {

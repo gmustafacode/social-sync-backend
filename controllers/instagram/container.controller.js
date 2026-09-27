@@ -2,11 +2,7 @@ import {
     instagramGraphGet,
     getInstagramError
 } from "../../config/instagram.js";
-{
 
-    // =====================================================
-},
-req.userId
 // GET /api/social/instagram/container/:containerId
 // =====================================================
 
