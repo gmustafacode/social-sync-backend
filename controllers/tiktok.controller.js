@@ -3,9 +3,13 @@ import jwt from "jsonwebtoken";
 import SocialAccount from "../models/socialAccount.model.js";
 
 const API_BASE = "https://open.tiktokapis.com/v2";
-const CLIENT_KEY = process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID;
-const REDIRECT_URI = process.env.TIKTOK_REDIRECT_URI;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+const getTikTokConfig = () => ({
+    clientKey: process.env.TIKTOK_CLIENT_KEY || process.env.TIKTOK_CLIENT_ID,
+    clientSecret: process.env.TIKTOK_CLIENT_SECRET,
+    redirectUri: process.env.TIKTOK_REDIRECT_URI
+});
 
 const getUserIdFromState = (state) => {
     if (!state) return null;
@@ -20,16 +24,17 @@ const getUserIdFromState = (state) => {
 const getAccount = async (userId) => SocialAccount.findOne({ platform: "tiktok", userId });
 
 export const connectTikTok = (req, res) => {
-    if (!CLIENT_KEY || !REDIRECT_URI) {
+    const { clientKey, clientSecret, redirectUri } = getTikTokConfig();
+    if (!clientKey || !clientSecret || !redirectUri) {
         return res.status(500).json({ success: false, message: "TikTok OAuth is not configured" });
     }
     const token = req.query.token || req.headers.authorization?.split(" ")[1];
     if (!token) return res.status(401).json({ success: false, message: "Authentication token required" });
     const params = new URLSearchParams({
-        client_key: CLIENT_KEY,
+        client_key: clientKey,
         response_type: "code",
         scope: "user.info.basic,video.publish",
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: redirectUri,
         state: token
     });
     return res.redirect(`https://www.tiktok.com/v2/auth/authorize/?${params.toString()}`);
@@ -37,17 +42,19 @@ export const connectTikTok = (req, res) => {
 
 export const tikTokCallback = async (req, res) => {
     const { code, state, error, error_description } = req.query;
+    const { clientKey, clientSecret, redirectUri } = getTikTokConfig();
     if (error) return res.redirect(`${FRONTEND_URL}/dashboard/connect?error=${encodeURIComponent(error_description || error)}`);
+    if (!clientKey || !clientSecret || !redirectUri) return res.redirect(`${FRONTEND_URL}/dashboard/connect?error=TikTok+OAuth+is+not+configured`);
     const userId = getUserIdFromState(state);
     if (!userId || !code) return res.redirect(`${FRONTEND_URL}/dashboard/connect?error=TikTok+authorization+failed`);
 
     try {
         const params = new URLSearchParams({
-            client_key: CLIENT_KEY,
-            client_secret: process.env.TIKTOK_CLIENT_SECRET,
+            client_key: clientKey,
+            client_secret: clientSecret,
             code,
             grant_type: "authorization_code",
-            redirect_uri: REDIRECT_URI
+            redirect_uri: redirectUri
         });
         const tokenResponse = await axios.post(`${API_BASE}/oauth/token/`, params.toString(), {
             headers: { "Content-Type": "application/x-www-form-urlencoded" }
