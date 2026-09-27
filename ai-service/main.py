@@ -38,6 +38,7 @@ def analyze_content(request: AnalysisRequest):
         
         # Run graph (Sync execution in threadpool)
         final_state = app_graph.invoke(initial_state)
+        # final_state = app_graph.invoke(initial_state)
         
         stats = final_state["stats"]
         return AnalysisResponse(**stats)
