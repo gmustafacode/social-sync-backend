@@ -23,6 +23,9 @@ const LONG_TOKEN_URL =
 
 const getFrontendUrl = () => {
     const configuredUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+    if (configuredUrl.includes("social-sync-frontend.vercel.app")) {
+        return "https://myfrontend-bice.vercel.app";
+    }
     return configuredUrl.replace(/\/+$/, "");
 };
 
