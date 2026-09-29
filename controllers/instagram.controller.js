@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 
 import SocialAccount from "../models/socialAccount.model.js";
+import { getMetaOAuthConfig } from "../utils/meta-credentials.js";
 
 dotenv.config();
 
@@ -60,6 +61,7 @@ export const connectInstagram = async (
     try {
 
         let userId = null;
+        const credentialId = req.query?.metaCredentialId || null;
         const token = req.query?.token;
         if (token) {
             try {
@@ -70,10 +72,13 @@ export const connectInstagram = async (
             }
         }
 
+        const oauthConfig = await getMetaOAuthConfig("instagram", userId, credentialId);
+
         const state = jwt.sign(
             {
                 nonce: crypto.randomBytes(32).toString("hex"),
-                userId
+                userId,
+                credentialId
             },
             process.env.JWT_SECRET,
             { expiresIn: "10m" }
@@ -84,10 +89,10 @@ export const connectInstagram = async (
             new URLSearchParams({
 
                 client_id:
-                    process.env.INSTAGRAM_APP_ID,
+                    oauthConfig.clientId,
 
                 redirect_uri:
-                    process.env.INSTAGRAM_REDIRECT_URI,
+                    oauthConfig.redirectUri,
 
                 response_type:
                     "code",
@@ -191,6 +196,12 @@ export const instagramCallback = async (
             });
         }
 
+        const oauthConfig = await getMetaOAuthConfig(
+            "instagram",
+            savedOAuth.userId,
+            savedOAuth.credentialId
+        );
+
         // ---------------------------------------------
         // CODE CHECK
         // ---------------------------------------------
@@ -217,16 +228,16 @@ export const instagramCallback = async (
             new URLSearchParams({
 
                 client_id:
-                    process.env.INSTAGRAM_APP_ID,
+                    oauthConfig.clientId,
 
                 client_secret:
-                    process.env.INSTAGRAM_APP_SECRET,
+                    oauthConfig.clientSecret,
 
                 grant_type:
                     "authorization_code",
 
                 redirect_uri:
-                    process.env.INSTAGRAM_REDIRECT_URI,
+                    oauthConfig.redirectUri,
 
                 code:
                     code.replace(/#_$/, "")
@@ -277,7 +288,7 @@ export const instagramCallback = async (
                             "ig_exchange_token",
 
                         client_secret:
-                            process.env.INSTAGRAM_APP_SECRET,
+                            oauthConfig.clientSecret,
 
                         access_token:
                             shortToken.access_token

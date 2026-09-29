@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 
 import SocialAccount from "../models/socialAccount.model.js";
+import { getMetaOAuthConfig } from "../utils/meta-credentials.js";
 
 dotenv.config();
 
@@ -16,7 +17,8 @@ const GRAPH_URL =
 const TEMP_USER_ID =
     process.env.TEMP_USER_ID || "temp-user-001";
 const DEPLOYED_FACEBOOK_REDIRECT_URI =
-    "https://newproject-chi-gold.vercel.app/api/social/facebook/callback";
+    process.env.FACEBOOK_REDIRECT_URI ||
+    "https://social-sync-backend.vercel.app/api/social/facebook/callback";
 
 
 // =====================================================
@@ -24,38 +26,36 @@ const DEPLOYED_FACEBOOK_REDIRECT_URI =
 // GET /api/social/facebook/connect
 // =====================================================
 
-export const connectFacebook = (req, res) => {
+export const connectFacebook = async (req, res) => {
 
     try {
 
-        const state = crypto
-            .randomBytes(32)
-            .toString("hex");
-
         let userId = null;
+        const credentialId = req.query?.metaCredentialId || null;
         const token = req.query?.token;
         const isMobileFlow = req.query?.mobile === "1";
         if (token) {
             try {
                 const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded?.id?.toString();
+                userId = (decoded?.id || decoded?._id || decoded?.userId)?.toString();
             } catch {
                 return res.status(401).json({ success: false, message: "Invalid mobile session token" });
             }
         }
 
-        req.app.locals.facebookOAuth = { state, userId };
-
-        const redirectUri = DEPLOYED_FACEBOOK_REDIRECT_URI;
-
-        req.app.locals.facebookOAuth.redirectUri = redirectUri;
+        const oauthConfig = await getMetaOAuthConfig("facebook", userId, credentialId);
+        const state = jwt.sign(
+            { userId, credentialId, nonce: crypto.randomBytes(32).toString("hex") },
+            process.env.JWT_SECRET,
+            { expiresIn: "10m" }
+        );
 
         const params = new URLSearchParams({
 
             client_id:
-                process.env.FACEBOOK_APP_ID,
+                oauthConfig.clientId,
 
-            redirect_uri: redirectUri,
+            redirect_uri: oauthConfig.redirectUri,
 
             state,
 
@@ -135,20 +135,26 @@ export const facebookCallback = async (req, res) => {
         }
 
 
-        const savedOAuth =
-            req.app.locals.facebookOAuth;
+        let savedOAuth;
+        try {
+            savedOAuth = jwt.verify(state, process.env.JWT_SECRET);
+        } catch {
+            savedOAuth = null;
+        }
 
-
-        if (
-            savedOAuth?.state &&
-            savedOAuth.state !== state
-        ) {
+        if (!savedOAuth || typeof savedOAuth !== "object") {
 
             return res.status(400).json({
                 success: false,
                 message: "Invalid OAuth state"
             });
         }
+
+        const oauthConfig = await getMetaOAuthConfig(
+            "facebook",
+            savedOAuth.userId,
+            savedOAuth.credentialId
+        );
 
 
         // =================================================
@@ -162,12 +168,12 @@ export const facebookCallback = async (req, res) => {
                     params: {
 
                         client_id:
-                            process.env.FACEBOOK_APP_ID,
+                            oauthConfig.clientId,
 
                         client_secret:
-                            process.env.FACEBOOK_APP_SECRET,
+                            oauthConfig.clientSecret,
 
-                        redirect_uri: savedOAuth?.redirectUri || DEPLOYED_FACEBOOK_REDIRECT_URI,
+                        redirect_uri: oauthConfig.redirectUri,
 
                         code
                     }
@@ -290,8 +296,6 @@ export const facebookCallback = async (req, res) => {
             }
         );
 
-
-        delete req.app.locals.facebookOAuth;
 
         const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=facebook&name=${encodeURIComponent(facebookUser.name || 'Facebook')}`);
