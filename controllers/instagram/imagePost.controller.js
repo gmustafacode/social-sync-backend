@@ -1,8 +1,21 @@
 import {
     getInstagramAccount,
     instagramGraphPost,
+    instagramGraphGet,
     getInstagramError
 } from "../../config/instagram.js";
+
+const waitForImageContainer = async (containerId, userId) => {
+    for (let attempt = 1; attempt <= 6; attempt += 1) {
+        const status = await instagramGraphGet(containerId, { fields: "id,status_code,status" }, userId);
+        if (status.status_code === "FINISHED") return status;
+        if (["ERROR", "EXPIRED"].includes(status.status_code)) {
+            throw new Error(`Instagram image container failed: ${status.status || status.status_code}`);
+        }
+        if (attempt < 6) await new Promise((resolve) => setTimeout(resolve, 10 * 1000));
+    }
+    throw new Error("Instagram image container did not become FINISHED within 1 minute");
+};
 
 export const createImagePost = async (req, res) => {
     try {
@@ -12,6 +25,7 @@ export const createImagePost = async (req, res) => {
         const account = await getInstagramAccount(req.userId);
         const container = await instagramGraphPost(`${account.platformUserId}/media`, { image_url: imageUrl, caption }, req.userId);
         if (!container.id) throw new Error("Instagram image container ID was not returned");
+        await waitForImageContainer(container.id, req.userId);
         const published = await instagramGraphPost(`${account.platformUserId}/media_publish`, { creation_id: container.id }, req.userId);
         return res.json({ success: true, message: "Instagram image published successfully", containerId: container.id, mediaId: published.id });
     } catch (error) {
