@@ -21,6 +21,11 @@ const SHORT_TOKEN_URL =
 const LONG_TOKEN_URL =
     "https://graph.instagram.com/access_token";
 
+const getFrontendUrl = () => {
+    const configuredUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+    return configuredUrl.replace(/\/+$/, "");
+};
+
 
 const TEMP_USER_ID =
     process.env.TEMP_USER_ID ||
@@ -472,12 +477,19 @@ export const instagramCallback = async (
             );
 
 
-        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+        const frontendUrl = getFrontendUrl();
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=instagram&name=${encodeURIComponent(account.username || account.name || 'Instagram')}`);
 
     } catch (error) {
         console.error("Instagram OAuth error:", error?.response?.data || error);
-        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
-        return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(error?.message || 'Instagram OAuth failed')}`);
+        const responseData = error?.response?.data;
+        const providerMessage = responseData
+            ? typeof responseData === "string"
+                ? responseData
+                : responseData.error_message || responseData.error?.message || responseData.message
+            : null;
+        const message = providerMessage || error?.message || "Instagram OAuth failed";
+        const frontendUrl = getFrontendUrl();
+        return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(message)}`);
     }
 };
