@@ -154,19 +154,10 @@ export const instagramCallback = async (
         // ---------------------------------------------
 
         if (error) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                message:
-                    "Instagram authorization failed",
-
-                error,
-                error_reason,
-                error_description
-
-            });
+            const message = error_description || error_reason || error;
+            return res.redirect(
+                `${getFrontendUrl()}/dashboard/connect?error=${encodeURIComponent(message)}`
+            );
         }
 
 
