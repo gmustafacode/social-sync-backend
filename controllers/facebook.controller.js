@@ -20,6 +20,14 @@ const DEPLOYED_FACEBOOK_REDIRECT_URI =
     process.env.FACEBOOK_REDIRECT_URI ||
     "https://social-sync-backend.vercel.app/api/social/facebook/callback";
 
+const getFrontendUrl = () => {
+    const configuredUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+    if (configuredUrl.includes("social-sync-frontend.vercel.app")) {
+        return "https://myfrontend-bice.vercel.app";
+    }
+    return configuredUrl.replace(/\/+$/, "");
+};
+
 
 // =====================================================
 // GET FACEBOOK LOGIN URL
@@ -297,14 +305,14 @@ export const facebookCallback = async (req, res) => {
         );
 
 
-        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+        const frontendUrl = getFrontendUrl();
         return res.redirect(`${frontendUrl}/dashboard/connect?connected=facebook&name=${encodeURIComponent(facebookUser.name || 'Facebook')}`);
 
 
     } catch (error) {
 
         console.error("Facebook Callback Error:", error.response?.data || error.message);
-        const frontendUrl = process.env.FRONTEND_URL || "https://myfrontend-bice.vercel.app";
+        const frontendUrl = getFrontendUrl();
         return res.redirect(`${frontendUrl}/dashboard/connect?error=${encodeURIComponent(error.message || 'Facebook connection failed')}`);
 
     }
