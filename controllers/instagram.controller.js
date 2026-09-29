@@ -311,7 +311,7 @@ export const instagramCallback = async (
             const profileResponse =
                 await axios.get(
 
-                    "https://graph.instagram.com/me",
+                    `${process.env.INSTAGRAM_API_VERSION ? `https://graph.instagram.com/${process.env.INSTAGRAM_API_VERSION}` : "https://graph.instagram.com"}/me`,
 
                     {
                         params: {
