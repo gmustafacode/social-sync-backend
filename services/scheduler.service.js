@@ -189,6 +189,7 @@ const runRecurringAutomation = async () => {
                     platform,
                     postType,
                     contentText,
+                    platformContent: result.platformContent || {},
                     status: "pending",
                     scheduledAt: now,
                     timezone: preference.timezone || "UTC",

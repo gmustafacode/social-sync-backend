@@ -108,13 +108,20 @@ export const generateSocialPost = async (
             document: "This commentary introduces a multi-page PDF presentation/slide deck. Highlight key slides and invite readers to swipe through."
         }[postType.toLowerCase()] || "Thought leadership post.";
 
-        const prompt = `You are a world-class LinkedIn ghostwriter and B2B thought leadership strategist.
-Create an authentic, viral, high-converting LinkedIn post based on the following:
+        const platformStrategy = {
+            linkedin: "Professional thought leadership. Use a strong insight hook, 3 actionable takeaways, a peer discussion question, and 3-5 precise professional hashtags. Maximum 2950 characters.",
+            facebook: "Conversational Page content. Lead with a relatable hook, explain the value clearly, invite comments or shares, and use 2-5 relevant hashtags. Maximum 5000 characters.",
+            instagram: "Visual-first caption. Start with a compact hook, use short scannable lines, include a clear save/share CTA, and use 6-10 tightly relevant hashtags. Maximum 2200 characters.",
+        }[platform.toLowerCase()] || "Platform-native social content with a clear hook, useful value, CTA, and relevant hashtags.";
+
+        const prompt = `You are a world-class ${platform} social SEO strategist and copywriter.
+    Create an authentic, high-converting ${platform} post based on the following:
 
 Topic / Core Theme: ${topic}
 Tone & Style: ${tone}
 Target Audience: ${audience || "Founders, Tech Executives, and Industry Leaders"}
 Post Format: ${postType} (${formatGuidelines})
+Platform SEO strategy: ${platformStrategy}
 ${learningContext}
 
 Structure Guidelines:
@@ -123,7 +130,7 @@ Structure Guidelines:
 3. THE INSIGHTS: 3-4 structured bullet points with clear, actionable value. Use clean bullet points (• or -).
 4. THE TAKEAWAY: A bold, memorable perspective summarizing the core lesson.
 5. THE CALL TO ACTION: A compelling, open-ended question inviting peers to share their thoughts in the comments.
-6. HASHTAGS: 3-4 relevant, high-traffic hashtags at the very bottom.
+6. HASHTAGS: Put only platform-appropriate, topic-specific hashtags at the very bottom. Avoid generic spam tags and never repeat the same tag. Follow the hashtag count in the platform SEO strategy above.
 
 Formatting Rules:
 - ABSOLUTE ZERO EMOJIS: Do NOT include ANY emojis, icons, or pictorial symbols anywhere in the post content unless explicitly requested by the user.

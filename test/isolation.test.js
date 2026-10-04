@@ -100,6 +100,20 @@ test("account SEO routes are authenticated and platform-aware", () => {
     assert.match(controller, /Instagram does not expose profile SEO writes/);
 });
 
+test("platform-specific post variants survive scheduled publishing", () => {
+    const composer = read("../frontend/src/pages/dashboard/Composer.tsx");
+    const posts = read("controllers/post.controller.js");
+    const scheduled = read("models/scheduledPost.model.js");
+    const publisher = read("services/posting.service.js");
+
+    assert.match(composer, /platformContent: generatedPlatformContent/);
+    assert.match(posts, /platformContent = \{\}/);
+    assert.match(scheduled, /platformContent: \{ type: mongoose\.Schema\.Types\.Mixed/);
+    assert.match(publisher, /post\.platformContent\?\.linkedin\?\.text/);
+    assert.match(publisher, /post\.platformContent\?\.facebook\?\.text/);
+    assert.match(publisher, /post\.platformContent\?\.instagram\?\.text/);
+});
+
 test("Next content and mutation routes include owner filters", () => {
     const content = read("app/api/content/route.ts");
     const contentItem = read("app/api/content/[id]/route.ts");

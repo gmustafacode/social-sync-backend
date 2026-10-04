@@ -72,6 +72,8 @@ const publishToLinkedIn = async (account, post, accessToken) => {
     const version = process.env.LINKEDIN_VERSION || "202601";
     const mediaUrl = post.mediaUrl || (post.mediaUrls && post.mediaUrls[0]);
     const postType = (post.postType || "TEXT").toUpperCase();
+    const platformContent = post.platformContent?.linkedin?.text;
+    const message = platformContent || post.contentText || post.content || "";
 
     // Direct Native LinkedIn Video Post
     if (postType === "VIDEO" && mediaUrl) {
@@ -83,7 +85,7 @@ const publishToLinkedIn = async (account, post, accessToken) => {
                 author: personUrn,
                 accessToken,
                 version,
-                commentary: post.contentText || post.content || "",
+                commentary: message,
                 title,
                 buffer,
                 size: buffer.length
@@ -96,7 +98,7 @@ const publishToLinkedIn = async (account, post, accessToken) => {
 
     const payload = {
         author: personUrn,
-        commentary: post.contentText || post.content || "",
+        commentary: message,
         visibility: "PUBLIC",
         distribution: {
             feedDistribution: "MAIN_FEED",
@@ -113,7 +115,7 @@ const publishToLinkedIn = async (account, post, accessToken) => {
             article: {
                 source: sourceUrl,
                 title: post.title || post.linkTitle || "Video Content",
-                description: post.description || post.linkDescription || post.contentText || ""
+                description: post.description || post.linkDescription || message
             }
         };
     }
@@ -153,7 +155,7 @@ const publishToFacebook = async (account, post, accessToken) => {
 
     const pageAccessToken = page.access_token;
     const pageId = page.id;
-    const message = post.contentText || post.content || "";
+    const message = post.platformContent?.facebook?.text || post.contentText || post.content || "";
     const mediaUrl = post.mediaUrl || (post.mediaUrls && post.mediaUrls[0]);
     const postType = (post.postType || "TEXT").toUpperCase();
 
@@ -210,7 +212,7 @@ const publishToX = async (account, post, accessToken) => {
 
     const response = await axios.post(
         url,
-        { text: post.contentText },
+        { text: post.platformContent?.x?.text || post.contentText },
         {
             headers: {
                 Authorization: `Bearer ${accessToken}`,
@@ -231,9 +233,10 @@ const publishToInstagram = async (account, post, accessToken) => {
 
     const isVideo = (post.postType || "").toUpperCase() === "VIDEO" ||
         (post.postType || "").toUpperCase() === "REEL";
+    const caption = post.platformContent?.instagram?.text || post.contentText || post.content || "";
     const mediaParams = isVideo
-        ? { media_type: "REELS", video_url: mediaUrl, caption: post.contentText }
-        : { image_url: mediaUrl, caption: post.contentText };
+        ? { media_type: "REELS", video_url: mediaUrl, caption }
+        : { image_url: mediaUrl, caption };
 
     const containerRes = await axios.post(`${graphUrl}/${account.platformUserId}/media`, null, {
         params: { ...mediaParams, access_token: accessToken }

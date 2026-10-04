@@ -6,6 +6,7 @@ const scheduledPostSchema = new mongoose.Schema({
     platform: { type: String, required: true },
     postType: { type: String, default: "TEXT" },
     contentText: { type: String, required: true },
+    platformContent: { type: mongoose.Schema.Types.Mixed, default: {} },
     metadata: { type: mongoose.Schema.Types.Mixed, default: {} },
     hashtags: [{ type: String }],
     keywords: [{ type: String }],
