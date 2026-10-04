@@ -33,6 +33,13 @@ export const createImagePost = async (req, res) => {
         return res.json({ success: true, message: "Instagram image published successfully", containerId: container.id, mediaId: published.id });
     } catch (error) {
         console.error("Instagram image post error:", error?.response?.data || error);
-        return res.status(error.statusCode || 500).json({ success: false, message: "Instagram image post failed", instagramError: getInstagramError(error), error: error.message });
+        const instagramError = getInstagramError(error);
+        const providerMessage = instagramError?.error?.message || instagramError?.message || error.message;
+        return res.status(error.statusCode || error.response?.status || 500).json({
+            success: false,
+            message: `Instagram image post failed: ${providerMessage}`,
+            instagramError,
+            error: error.message
+        });
     }
 };
