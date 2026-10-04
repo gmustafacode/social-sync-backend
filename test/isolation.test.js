@@ -86,6 +86,19 @@ test("post metadata normalizes hashtags and SEO fields for each platform", () =>
     assert.match(contentWithHashtags("Build better AI systems", metadata), /#ai/);
 });
 
+test("account SEO routes are authenticated and platform-aware", () => {
+    const routes = read("routes/social.routes.js");
+    const controller = read("controllers/account-seo.controller.js");
+
+    assert.match(routes, /router\.get\("\/seo", authMiddleware/);
+    assert.match(routes, /router\.post\("\/seo\/generate", authMiddleware/);
+    assert.match(routes, /router\.put\("\/seo\/:accountId", authMiddleware/);
+    assert.match(controller, /SocialAccount\.findOne\(\{ _id: accountId, userId \}\)/);
+    assert.match(controller, /platformApiWrite: false/);
+    assert.match(controller, /graph\.facebook\.com/);
+    assert.match(controller, /graph\.instagram\.com/);
+});
+
 test("Next content and mutation routes include owner filters", () => {
     const content = read("app/api/content/route.ts");
     const contentItem = read("app/api/content/[id]/route.ts");

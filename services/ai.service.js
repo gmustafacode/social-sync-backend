@@ -215,6 +215,47 @@ Rules: Return the revised POST CONTENT ONLY. Start directly with the text. Do no
     }
 };
 
+export const generateAccountSeo = async ({ platform, accountName = "", current = {}, audience = "", niche = "" }) => {
+    const prompt = `You are a social media SEO strategist. Create an account SEO package for ${platform}.
+Account name: ${accountName}
+Audience: ${audience || "Relevant professional audience"}
+Niche: ${niche || "Not specified"}
+Current fields: ${JSON.stringify(current)}
+
+Return JSON only with these fields:
+{
+  "displayName": "short profile/page name",
+  "headline": "platform-appropriate headline, empty string if not applicable",
+  "bio": "clear profile bio, maximum 150 characters where appropriate",
+  "about": "longer about/description, maximum 500 characters",
+  "keywords": ["5-10 search keywords"],
+  "website": "keep the current website or empty string",
+  "altText": "accessible description for the profile image",
+  "callToAction": "one concise call to action"
+}`;
+
+    try {
+        const { content } = await groqRequest([{ role: "user", content: prompt }], {
+            temperature: 0.4,
+            json: true,
+            max_tokens: 900
+        });
+        const parsed = JSON.parse(content);
+        return {
+            displayName: String(parsed.displayName || ""),
+            headline: String(parsed.headline || ""),
+            bio: String(parsed.bio || ""),
+            about: String(parsed.about || ""),
+            keywords: Array.isArray(parsed.keywords) ? parsed.keywords.map(String).slice(0, 10) : [],
+            website: String(parsed.website || current.website || ""),
+            altText: String(parsed.altText || ""),
+            callToAction: String(parsed.callToAction || "")
+        };
+    } catch (error) {
+        throw new Error(`Account SEO generation failed: ${error.message}`);
+    }
+};
+
 // ─── Moderate & optimize content ─────────────────────────────────────────────
 export const moderateContent = async (content, platforms = ["linkedin"]) => {
     try {
