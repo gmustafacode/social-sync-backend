@@ -96,7 +96,8 @@ test("account SEO routes are authenticated and platform-aware", () => {
     assert.match(controller, /SocialAccount\.findOne\(\{ _id: accountId, userId \}\)/);
     assert.match(controller, /platformApiWrite: false/);
     assert.match(controller, /graph\.facebook\.com/);
-    assert.match(controller, /graph\.instagram\.com/);
+    assert.doesNotMatch(controller, /graph\.instagram\.com/);
+    assert.match(controller, /Instagram does not expose profile SEO writes/);
 });
 
 test("Next content and mutation routes include owner filters", () => {

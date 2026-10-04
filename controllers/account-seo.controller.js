@@ -36,9 +36,9 @@ const getPlatformState = (account) => {
             : [],
         connected: true,
         seo: cleanSeo(metadata.seo),
-        capabilities: account.platform === "linkedin"
-            ? { localSeo: true, profileApiWrite: false }
-            : { localSeo: true, profileApiWrite: true }
+        capabilities: account.platform === "facebook"
+            ? { localSeo: true, profileApiWrite: true }
+            : { localSeo: true, profileApiWrite: false }
     };
 };
 
@@ -98,18 +98,7 @@ export const saveAccountSeo = async (req, res) => {
             platformSynced = true;
             syncMessage = `Facebook Page "${page.name || page.id}" SEO fields updated.`;
         } else if (account.platform === "instagram") {
-            const params = {
-                ...(seo.displayName ? { name: seo.displayName } : {}),
-                ...(seo.bio ? { biography: seo.bio } : {}),
-                ...(seo.website ? { website: seo.website } : {})
-            };
-            if (Object.keys(params).length > 0) {
-                await axios.post(`https://graph.instagram.com/${process.env.INSTAGRAM_API_VERSION || "v25.0"}/${account.platformUserId}`, null, {
-                    params: { ...params, access_token: account.accessToken }
-                });
-            }
-            platformSynced = true;
-            syncMessage = "Instagram profile SEO fields updated.";
+            syncMessage = "Instagram does not expose profile SEO writes through the connected API scope. The SEO package was saved locally for captions, hashtags and content optimization.";
         } else {
             syncMessage = "LinkedIn does not expose general profile editing through this API permission. The SEO package was saved locally and is ready to use in posts.";
         }
@@ -118,6 +107,20 @@ export const saveAccountSeo = async (req, res) => {
         res.json({ success: true, platformSynced, syncMessage, account: getPlatformState({ ...account, metadata }) });
     } catch (error) {
         const providerMessage = error.response?.data?.error?.message;
+        const isCapabilityError = /capability|permission|does not have/i.test(providerMessage || error.message || "");
+        if (isCapabilityError) {
+            const userId = req.userId?.toString();
+            const account = await findOwnedAccount(userId, req.params.accountId);
+            const seo = cleanSeo(req.body.seo);
+            const metadata = { ...parseMetadata(account?.metadata), seo, seoUpdatedAt: new Date().toISOString() };
+            await SocialAccount.updateOne({ _id: req.params.accountId, userId }, { $set: { metadata } });
+            return res.json({
+                success: true,
+                platformSynced: false,
+                syncMessage: "The platform API rejected profile editing for this app permission. Your SEO package was saved locally and will be used for content optimization.",
+                account: account ? getPlatformState({ ...account, metadata }) : undefined
+            });
+        }
         res.status(error.response?.status || 500).json({ success: false, message: providerMessage || error.message });
     }
 };
