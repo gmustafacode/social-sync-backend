@@ -109,10 +109,20 @@ export const generateSocialPost = async (
         }[postType.toLowerCase()] || "Thought leadership post.";
 
         const platformStrategy = {
-            linkedin: "Professional thought leadership. Use a strong insight hook, 3 actionable takeaways, a peer discussion question, and 3-5 precise professional hashtags. Maximum 2950 characters.",
-            facebook: "Conversational Page content. Lead with a relatable hook, explain the value clearly, invite comments or shares, and use 2-5 relevant hashtags. Maximum 5000 characters.",
-            instagram: "Visual-first caption. Start with a compact hook, use short scannable lines, include a clear save/share CTA, and use 6-10 tightly relevant hashtags. Maximum 2200 characters.",
+            linkedin: "Professional thought leadership. Use a strong insight hook, 3 actionable takeaways, a specific peer discussion question, and 3-5 precise professional hashtags. Maximum 2950 characters.",
+            facebook: "Conversational Page content. Lead with a relatable hook or short story, explain the value clearly, invite a genuine opinion, and use 2-5 relevant hashtags. Maximum 5000 characters.",
+            instagram: "Visual-first caption. Start with a compact curiosity hook, use short scannable lines, include one useful takeaway, a natural save/share CTA, and 6-10 tightly relevant hashtags. Maximum 2200 characters.",
         }[platform.toLowerCase()] || "Platform-native social content with a clear hook, useful value, CTA, and relevant hashtags.";
+
+        const engagementRules = `
+ENGAGEMENT DESIGN:
+- Make the opening specific and curiosity-driven; do not use empty clickbait such as "You won't believe".
+- Include one concrete example, observation, mini-story, or counter-intuitive point so the post earns attention.
+- Give the reader a useful takeaway they can apply immediately.
+- End with one easy-to-answer, platform-appropriate question that invites experience or opinion, not a generic "Thoughts?".
+- Use a natural call to action: conversation on LinkedIn/Facebook, save or share on Instagram.
+- Never ask for fake likes, follows, comments, or engagement pods. Never use spammy bait, excessive punctuation, or generic motivational filler.
+`;
 
         const prompt = `You are a world-class ${platform} social SEO strategist and copywriter.
     Create an authentic, high-converting ${platform} post based on the following:
@@ -123,6 +133,7 @@ Target Audience: ${audience || "Founders, Tech Executives, and Industry Leaders"
 Post Format: ${postType} (${formatGuidelines})
 Platform SEO strategy: ${platformStrategy}
 ${learningContext}
+${engagementRules}
 
 Structure Guidelines:
 1. THE HOOK (Line 1): A provocative, scroll-stopping opening line (max 10-12 words). Make the reader click "...see more".
@@ -201,6 +212,7 @@ export const refineContent = async (content, action = "hook", customInstruction 
             shorten: "Condense this LinkedIn post by 30-40%. Remove filler, make sentences punchier, and preserve all core insights and bullet points.",
             expand: "Expand this post with deeper actionable takeaways, specific frameworks, and real-world examples.",
             hashtags: "Analyze the post and replace or add 5 highly targeted, trending LinkedIn hashtags at the bottom.",
+            engagement: "Improve engagement without changing the core idea: rewrite the opening into a specific curiosity hook, add one concrete example or practical takeaway, and end with one easy-to-answer audience question plus a natural platform-appropriate call to action. Remove generic filler and fake engagement bait.",
             custom: customInstruction || "Polish and elevate this post for maximum professional engagement."
         };
 
