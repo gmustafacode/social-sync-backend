@@ -20,6 +20,7 @@ export const generatePostContent = async (req, res) => {
             content: result.rawContent,
             text: result.rawContent,
             platformContent: result.platformContent,
+            metadata: result.platformContent,
             safety: result.safetyStatus,
             analytics: result.analytics,
             feedback: result.feedbackPrompt

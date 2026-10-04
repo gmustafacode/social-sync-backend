@@ -4,6 +4,7 @@ import {
     instagramGraphGet,
     getInstagramError
 } from "../../config/instagram.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 const waitForImageContainer = async (containerId, userId) => {
     for (let attempt = 1; attempt <= 6; attempt += 1) {
@@ -20,10 +21,12 @@ const waitForImageContainer = async (containerId, userId) => {
 export const createImagePost = async (req, res) => {
     try {
         const { imageUrl, caption = "" } = req.body;
+        const metadata = buildPostMetadata({ content: caption, platform: "instagram", metadata: req.body.metadata });
+        const finalCaption = contentWithHashtags(caption, metadata);
         if (!imageUrl) return res.status(400).json({ success: false, message: "imageUrl is required" });
         if (!/^https?:\/\//i.test(imageUrl)) return res.status(400).json({ success: false, message: "imageUrl must be a public HTTP/HTTPS URL" });
         const account = await getInstagramAccount(req.userId);
-        const container = await instagramGraphPost(`${account.platformUserId}/media`, { image_url: imageUrl, caption }, req.userId);
+        const container = await instagramGraphPost(`${account.platformUserId}/media`, { image_url: imageUrl, caption: finalCaption }, req.userId);
         if (!container.id) throw new Error("Instagram image container ID was not returned");
         await waitForImageContainer(container.id, req.userId);
         const published = await instagramGraphPost(`${account.platformUserId}/media_publish`, { creation_id: container.id }, req.userId);

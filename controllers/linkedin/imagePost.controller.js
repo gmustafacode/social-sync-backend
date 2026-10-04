@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 // ========================================
 // Create LinkedIn Image Post
@@ -12,7 +13,8 @@ import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
 
 export const createLinkedInImagePost = async (req, res) => {
     try {
-        const text = req.body.text || req.body.content || req.body.commentary || "";
+        const metadata = buildPostMetadata({ content: req.body.text || req.body.content || req.body.commentary || "", platform: "linkedin", metadata: req.body.metadata });
+        const text = contentWithHashtags(req.body.text || req.body.content || req.body.commentary || "", metadata);
         const title = req.body.title || "SocialSync Post";
 
         let imageBuffer = null;

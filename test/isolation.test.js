@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import jwt from "jsonwebtoken";
 import authMiddleware from "../middleware/auth.js";
+import { buildPostMetadata, contentWithHashtags } from "../utils/post-metadata.js";
 
 const backendRoot = path.resolve(import.meta.dirname, "..");
 const read = (relativePath) => fs.readFileSync(path.join(backendRoot, relativePath), "utf8");
@@ -69,6 +70,20 @@ test("platform routes authenticate data endpoints", () => {
         assert.match(source, /import authMiddleware/);
         assert.match(source, /router\.use\(authMiddleware\)/);
     }
+});
+
+test("post metadata normalizes hashtags and SEO fields for each platform", () => {
+    const metadata = buildPostMetadata({
+        content: "Build better AI systems #AI",
+        topic: "Autonomous agents",
+        platform: "instagram"
+    });
+
+    assert.deepEqual(metadata.hashtags.slice(0, 2), ["#ai", "#autonomous"]);
+    assert.ok(metadata.keywords.includes("ai"));
+    assert.ok(metadata.seoTitle.length <= 60);
+    assert.ok(metadata.seoDescription.length <= 160);
+    assert.match(contentWithHashtags("Build better AI systems", metadata), /#ai/);
 });
 
 test("Next content and mutation routes include owner filters", () => {

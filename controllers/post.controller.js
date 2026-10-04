@@ -7,6 +7,7 @@ import { getLinkedInAccount } from "./linkedin/helpers.js";
 import { getFacebookAccount, getFacebookPageToken } from "./facebook/helpers.js";
 import { publishPost } from "../services/posting.service.js";
 import { publishLinkedInVideo } from "./linkedin/videoPost.controller.js";
+import { buildPostMetadata, contentWithHashtags } from "../utils/post-metadata.js";
 
 // ─── Helper: normalize a post doc into a clean frontend shape ─────────────
 const normalizePost = (doc) => ({
@@ -23,6 +24,12 @@ const normalizePost = (doc) => ({
     scheduledFor: doc.scheduledAt || doc.scheduledFor,
     publishedAt: doc.publishedAt,
     lastError: doc.lastError,
+    metadata: doc.metadata || {},
+    hashtags: doc.hashtags || doc.metadata?.hashtags || [],
+    keywords: doc.keywords || doc.metadata?.keywords || [],
+    seoTitle: doc.seoTitle || doc.metadata?.seoTitle,
+    seoDescription: doc.seoDescription || doc.metadata?.seoDescription,
+    altText: doc.altText || doc.metadata?.altText,
 });
 
 
@@ -43,9 +50,22 @@ export const createPost = async (req, res) => {
             postType,
             title,
             linkUrl,
+            metadata = {},
+            hashtags = [],
+            keywords = [],
+            seoTitle,
+            seoDescription,
+            altText,
         } = req.body;
 
-        const text = content || contentText;
+        const requestedText = content || contentText;
+        const postMetadata = buildPostMetadata({
+            content: requestedText,
+            topic: title || "social media content",
+            platform: (platforms[0] || platform || "linkedin").toLowerCase(),
+            metadata: { ...metadata, hashtags, keywords, seoTitle, seoDescription, altText }
+        });
+        const text = contentWithHashtags(requestedText, postMetadata);
         if (!text) {
             return res.status(400).json({ success: false, message: "content is required" });
         }
@@ -85,7 +105,19 @@ export const createPost = async (req, res) => {
                     platform: plt,
                     postType: (postType || "text").toUpperCase(),
                     title,
+                    metadata: postMetadata,
+                    hashtags: postMetadata.hashtags,
+                    keywords: postMetadata.keywords,
+                    seoTitle: postMetadata.seoTitle,
+                    seoDescription: postMetadata.seoDescription,
+                    altText: postMetadata.altText,
                     contentText: text,
+                    metadata: postMetadata,
+                    hashtags: postMetadata.hashtags,
+                    keywords: postMetadata.keywords,
+                    seoTitle: postMetadata.seoTitle,
+                    seoDescription: postMetadata.seoDescription,
+                    altText: postMetadata.altText,
                     mediaUrl,
                     scheduledAt: new Date(resolvedScheduled || Date.now()),
                     status: "pending",
@@ -103,6 +135,12 @@ export const createPost = async (req, res) => {
                 postType: (postType || "text").toUpperCase(),
                 title,
                 linkUrl,
+                metadata: postMetadata,
+                hashtags: postMetadata.hashtags,
+                keywords: postMetadata.keywords,
+                seoTitle: postMetadata.seoTitle,
+                seoDescription: postMetadata.seoDescription,
+                altText: postMetadata.altText,
                 mediaUrls: mediaUrl ? [mediaUrl] : [],
                 status: "scheduled",
                 scheduledAt: new Date(resolvedScheduled || Date.now()),
@@ -126,6 +164,12 @@ export const createPost = async (req, res) => {
             postType: (postType || "text").toUpperCase(),
             title,
             linkUrl,
+            metadata: postMetadata,
+            hashtags: postMetadata.hashtags,
+            keywords: postMetadata.keywords,
+            seoTitle: postMetadata.seoTitle,
+            seoDescription: postMetadata.seoDescription,
+            altText: postMetadata.altText,
             mediaUrls: mediaUrl ? [mediaUrl] : [],
             status: status === "scheduled" ? "queued" : status,
         });

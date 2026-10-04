@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 // ========================================
 // Create LinkedIn Document / PDF Post
@@ -12,7 +13,8 @@ import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
 
 export const createLinkedInDocumentPost = async (req, res) => {
     try {
-        const text = req.body.text || req.body.content || req.body.commentary || "";
+        const metadata = buildPostMetadata({ content: req.body.text || req.body.content || req.body.commentary || "", platform: "linkedin", metadata: req.body.metadata });
+        const text = contentWithHashtags(req.body.text || req.body.content || req.body.commentary || "", metadata);
         const title = req.body.title || "Shared Document";
 
         let docBuffer = null;
@@ -125,7 +127,8 @@ export const createLinkedInDocumentPost = async (req, res) => {
             commentary: text.trim(),
             postType: "document",
             mediaUrls: docSource ? [docSource] : [],
-            content: payload
+            content: payload,
+            metadata
         });
 
         return res.status(201).json({

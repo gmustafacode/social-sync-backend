@@ -4,6 +4,7 @@ import {
     instagramGraphGet,
     getInstagramError
 } from "../../config/instagram.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 const waitForReel = async (containerId, userId) => {
     for (let attempt = 1; attempt <= 5; attempt += 1) {
@@ -18,10 +19,12 @@ const waitForReel = async (containerId, userId) => {
 export const createReelPost = async (req, res) => {
     try {
         const { videoUrl, caption = "", shareToFeed = true } = req.body;
+        const metadata = buildPostMetadata({ content: caption, platform: "instagram", metadata: req.body.metadata });
+        const finalCaption = contentWithHashtags(caption, metadata);
         if (!videoUrl) return res.status(400).json({ success: false, message: "videoUrl is required" });
         if (!/^https?:\/\//i.test(videoUrl)) return res.status(400).json({ success: false, message: "videoUrl must be a public HTTP/HTTPS URL" });
         const account = await getInstagramAccount(req.userId);
-        const container = await instagramGraphPost(`${account.platformUserId}/media`, { media_type: "REELS", video_url: videoUrl, caption, share_to_feed: shareToFeed }, req.userId);
+        const container = await instagramGraphPost(`${account.platformUserId}/media`, { media_type: "REELS", video_url: videoUrl, caption: finalCaption, share_to_feed: shareToFeed }, req.userId);
         if (!container.id) throw new Error("Instagram Reel container ID was not returned");
         await waitForReel(container.id, req.userId);
         const published = await instagramGraphPost(`${account.platformUserId}/media_publish`, { creation_id: container.id }, req.userId);

@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 // ========================================
 // Create LinkedIn Text Post
@@ -9,7 +10,9 @@ import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
 
 export const createLinkedInTextPost = async (req, res) => {
     try {
-        const text = req.body.text || req.body.content || req.body.commentary;
+        const rawText = req.body.text || req.body.content || req.body.commentary;
+        const metadata = buildPostMetadata({ content: rawText, platform: "linkedin", metadata: req.body.metadata });
+        const text = contentWithHashtags(rawText, metadata);
 
         if (!text || !text.trim()) {
             return res.status(400).json({
@@ -61,7 +64,8 @@ export const createLinkedInTextPost = async (req, res) => {
             platformPostId: postId,
             commentary: text.trim(),
             postType: "text",
-            content: payload
+            content: payload,
+            metadata
         });
 
         return res.status(201).json({

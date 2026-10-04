@@ -8,6 +8,7 @@ import {
     uploadTemporaryMedia,
     deleteTemporaryMedia
 } from "../../services/cloudinary.service.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 const GRAPH_API_VERSION = process.env.FACEBOOK_API_VERSION || "v25.0";
 const GRAPH_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -24,7 +25,8 @@ export const createVideoPost = async (req, res) => {
             videoUrl
         } = req.body;
 
-        const postDesc = description || text || title || "";
+        const metadata = buildPostMetadata({ content: description || text || title || "", platform: "facebook", metadata: req.body.metadata });
+        const postDesc = contentWithHashtags(description || text || title || "", metadata);
 
         const file = req.file || (req.files && req.files.find((f) => f.fieldname === "video" || f.fieldname === "file")) || (req.files && req.files[0]);
 

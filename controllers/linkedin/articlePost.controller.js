@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 /**
  * Creates a LinkedIn Article / Link post with link preview metadata.
@@ -8,7 +9,9 @@ import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
  */
 export const createLinkedInArticlePost = async (req, res) => {
     try {
-        const { text, url, link, source, title, description } = req.body;
+        const { text: rawText, url, link, source, title, description } = req.body;
+        const metadata = buildPostMetadata({ content: rawText, platform: "linkedin", metadata: req.body.metadata });
+        const text = contentWithHashtags(rawText, metadata);
         const targetUrl = url || link || source;
 
         if (!text || !text.trim()) {
@@ -67,7 +70,8 @@ export const createLinkedInArticlePost = async (req, res) => {
             commentary: text.trim(),
             postType: "article",
             mediaUrls: [targetUrl],
-            content: payload
+            content: payload,
+            metadata
         });
 
         return res.status(201).json({

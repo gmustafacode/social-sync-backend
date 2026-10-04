@@ -8,6 +8,7 @@ import {
     uploadTemporaryMedia,
     deleteTemporaryMedia
 } from "../../services/cloudinary.service.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 const GRAPH_API_VERSION = process.env.FACEBOOK_API_VERSION || "v25.0";
 const GRAPH_URL = `https://graph.facebook.com/${GRAPH_API_VERSION}`;
@@ -23,7 +24,8 @@ export const createImagePost = async (req, res) => {
             imageUrl
         } = req.body;
 
-        const postCaption = caption || text || "";
+        const metadata = buildPostMetadata({ content: caption || text || "", platform: "facebook", metadata: req.body.metadata });
+        const postCaption = contentWithHashtags(caption || text || "", metadata);
 
         const file = req.file || (req.files && req.files.find((f) => f.fieldname === "image" || f.fieldname === "file")) || (req.files && req.files[0]);
 

@@ -6,6 +6,7 @@ import ContentAiAnalysis from "../models/contentAiAnalysis.model.js";
 import AIProcessingLog from "../models/aiProcessingLog.model.js";
 import AILearningExample from "../models/aiLearningExample.model.js";
 import Preference from "../models/preference.model.js";
+import { buildPostMetadata, contentWithHashtags } from "../utils/post-metadata.js";
 
 async function safeLogAI({ userId, actionType, prompt, response, modelUsed, status, errorMessage }) {
     try {
@@ -262,7 +263,11 @@ export const runIntelligenceLayer = async (userId, topic, audienceOverride, tone
         const platformContent = {};
         for (const platform of platforms) {
             const content = await generateSocialPost(userId, topic, platform, audience, tone, postType);
-            platformContent[platform] = { text: content, platform };
+            const metadata = buildPostMetadata({ content, topic, platform });
+            platformContent[platform] = {
+                text: contentWithHashtags(content, metadata),
+                ...metadata,
+            };
         }
         const rawContent = platformContent[platforms[0]]?.text || "";
         const safety = await moderateContent(rawContent, platforms);

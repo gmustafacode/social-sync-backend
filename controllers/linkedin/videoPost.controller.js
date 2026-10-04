@@ -1,5 +1,6 @@
 import axios from "axios";
 import { getLinkedInAccount, recordPublishedPost } from "./helpers.js";
+import { buildPostMetadata, contentWithHashtags } from "../../utils/post-metadata.js";
 
 /**
  * Core function to upload and publish video to LinkedIn
@@ -124,7 +125,8 @@ export const publishLinkedInVideo = async ({
 
 export const createLinkedInVideoPost = async (req, res) => {
     try {
-        const text = req.body.text || req.body.content || req.body.commentary || "";
+        const metadata = buildPostMetadata({ content: req.body.text || req.body.content || req.body.commentary || "", platform: "linkedin", metadata: req.body.metadata });
+        const text = contentWithHashtags(req.body.text || req.body.content || req.body.commentary || "", metadata);
         const video = req.file || (req.files && req.files.find((f) => f.fieldname === "video" || f.fieldname === "file")) || (req.files && req.files[0]);
         const videoUrl = req.body.videoUrl;
 
@@ -174,7 +176,8 @@ export const createLinkedInVideoPost = async (req, res) => {
                 commentary: text,
                 postType: "video",
                 mediaUrls: [videoTitle],
-                content: { author, videoUrn }
+                content: { author, videoUrn },
+                metadata
             });
         }
 
